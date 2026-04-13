@@ -17,6 +17,7 @@ interface VinylPlayerProps {
   snapAnim: boolean;
   volume?: number;
   analyserRef?: React.RefObject<AnalyserNode | null>;
+  onScratch?: (degPerMs: number) => void;
 }
 
 export function VinylPlayer({
@@ -31,10 +32,17 @@ export function VinylPlayer({
   snapAnim,
   volume = 0.7,
   analyserRef,
+  onScratch,
 }: VinylPlayerProps) {
   return (
     <div className={styles.playerCard}>
-      <Platter activeAlbum={activeAlbum} isPlaying={isPlaying} snapAnim={snapAnim} />
+      <Platter
+        activeAlbum={activeAlbum}
+        isPlaying={isPlaying}
+        snapAnim={snapAnim}
+        onEject={onEject}
+        onScratch={onScratch}
+      />
       <DateBadge activeAlbum={activeAlbum} isPlaying={isPlaying} isLoading={isLoading} volume={volume} />
       <VolumeControl onVolumeUp={onVolumeUp} onVolumeDown={onVolumeDown} />
       <TransportBar

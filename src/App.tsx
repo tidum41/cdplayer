@@ -25,7 +25,7 @@ const MOBILE_BREAKPOINT = 500; // px — below this, switch to vertical layout
 
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
-  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef } = useAudio();
+  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio } = useAudio();
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,14 +48,14 @@ export default function App() {
     setIsVertical(vertical);
 
     if (vertical) {
-      // Vertical: player fills ~90% of width, capped at 50% height
-      const availW = W * 0.90;
-      const availH = H * 0.52;
+      // Vertical: player fills ~92% of width, capped at 58% of height (optimised for 600px embeds)
+      const availW = W * 0.92;
+      const availH = H * 0.58;
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
       setScale(Math.max(0.14, s));
     } else {
-      // Horizontal: player gets ~28% of width, 90% of height
-      const availW = W * 0.28;
+      // Horizontal: player gets ~30% of width, 90% of height
+      const availW = W * 0.30;
       const availH = H * 0.90;
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
       setScale(Math.max(0.2, s));
@@ -165,6 +165,10 @@ export default function App() {
     eject(); if (audioEnabled !== false) stopAudio();
   }, [eject, stopAudio, audioEnabled]);
 
+  const handleScratch = useCallback((degPerMs: number) => {
+    if (audioEnabled !== false) scratchAudio(degPerMs);
+  }, [audioEnabled, scratchAudio]);
+
   // ── Layout math ────────────────────────────────────────────────────────────
   const playerHeight = PLAYER_H * scale;
 
@@ -221,6 +225,7 @@ export default function App() {
                     snapAnim={snapAnim}
                     volume={volume}
                     analyserRef={analyserRef}
+                    onScratch={handleScratch}
                   />
                 </div>
               </div>

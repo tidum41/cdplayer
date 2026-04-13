@@ -1,15 +1,7 @@
 /**
  * Album configuration — edit this file to add your own music.
  *
- * For each album:
- *   - id:       Unique string (any value)
- *   - title:    Song or album title
- *   - artist:   Artist name
- *   - color:    Dominant color from album art (hex) — shown during drag + as fallback
- *   - artUrl:   (optional) Path to cover image in /public/music/
- *   - audioUrl: (optional) Path to MP3 in /public/music/
- *
- * TIP: Run `npm run sync-music` to auto-generate entries from files in /public/music/
+ * TIP: Run `npm run sync-music` to auto-generate entries from /public/music/
  */
 
 export interface Album {
@@ -24,7 +16,7 @@ export interface Album {
 export const albums: Album[] = [
   {
     id: '1',
-    title: 'flash in the pan',
+    title: 'Flash in the Pan',
     artist: 'jane remover',
     color: '#8475A0',
     artUrl: '/music/janeremover-flashinthepan-cover.jpeg',
@@ -64,7 +56,7 @@ export const albums: Album[] = [
   },
   {
     id: '6',
-    title: "Hennessy & Sailor Moon",
+    title: 'Hennessy & Sailor Moon',
     artist: 'Yung Lean & Bladee',
     color: '#7890A8',
     artUrl: '/music/bladeeyunglean-hennesyandsailormoon-cover.jpg',
@@ -81,17 +73,17 @@ export const albums: Album[] = [
   {
     id: '8',
     title: 'Golden',
-    artist: 'kpop demon hunters',
+    artist: 'KPOP DEMON HUNTERS',
     color: '#C8A030',
     artUrl: '/music/kpopdemonhunters-cover.jpg',
     audioUrl: '/music/kpopdemonhunters-golden.mp3',
   },
   {
     id: '9',
-    title: 'Always',
+    title: 'B.Y.S.',
     artist: 'keshi',
     color: '#7A9888',
     artUrl: '/music/keshi-always-cover.jpg',
-    // audioUrl missing — add keshi-always.mp3 to /public/music/ to fix
+    // audioUrl: '/music/keshi-bys.mp3',  ← add the mp3 with this filename
   },
 ];

@@ -37,7 +37,7 @@ export function DragDisc({ size, color = '#B0B0B0' }: DragDiscProps) {
           `Z`,
         ].join(' ')}
         fill={color}
-        fillOpacity={0.85}
+        fillOpacity={1}
       />
     </svg>
   );

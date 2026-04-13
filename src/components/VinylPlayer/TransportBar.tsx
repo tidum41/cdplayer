@@ -68,8 +68,11 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         if (!bar) return;
         const bin = FREQ_BINS[i] ?? 4;
         const raw = dataRef.current![bin] ?? 0;
-        // Map 0-255 to 10%-95% height
-        const pct = 10 + (raw / 255) * 85;
+        // Power-curve amplification: quiet signals still show movement,
+        // loud signals hit the top dramatically
+        const normalized = raw / 255;
+        const amplified = Math.pow(normalized, 0.55) * 1.15;
+        const pct = 6 + Math.min(amplified, 1) * 90;
         bar.style.height = `${pct}%`;
       });
       rafRef.current = requestAnimationFrame(animate);

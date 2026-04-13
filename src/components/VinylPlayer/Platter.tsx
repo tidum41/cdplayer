@@ -7,9 +7,11 @@ interface PlatterProps {
   activeAlbum: Album | null;
   isPlaying: boolean;
   snapAnim: boolean;
+  onEject?: () => void;
+  onScratch?: (degPerMs: number) => void;
 }
 
-export function Platter({ activeAlbum, isPlaying, snapAnim }: PlatterProps) {
+export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch }: PlatterProps) {
   const { setNodeRef, isOver } = useDroppable({ id: 'platter' });
 
   return (
@@ -17,11 +19,12 @@ export function Platter({ activeAlbum, isPlaying, snapAnim }: PlatterProps) {
       ref={setNodeRef}
       className={`${styles.platter} ${isOver ? styles.over : ''} ${snapAnim ? styles.snapIn : ''}`}
     >
-      {/* Disc always visible; arcs only when an album is loaded */}
       <Disc
         size={835}
         isSpinning={isPlaying && !!activeAlbum}
         showArcs={!!activeAlbum}
+        onEject={onEject}
+        onScratch={onScratch}
       />
     </div>
   );

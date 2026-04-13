@@ -36,15 +36,14 @@ export function useAudio() {
   /** Connect the audio element to an AnalyserNode (call once per audio element, on user gesture) */
   const connectAudioGraph = useCallback((audio: HTMLAudioElement) => {
     if (sourceConnectedRef.current) {
-      // Just resume context if needed
       audioCtxRef.current?.resume();
       return;
     }
     try {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.85;
+      analyser.fftSize = 64;               // fewer bins = faster, more punchy response
+      analyser.smoothingTimeConstant = 0.55; // less smoothing = more reactive
       const source = ctx.createMediaElementSource(audio);
       source.connect(analyser);
       analyser.connect(ctx.destination);
@@ -102,5 +101,22 @@ export function useAudio() {
     setVolume(v => Math.max(0, +(v - 0.1).toFixed(1)));
   }, []);
 
-  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef };
+  /**
+   * Apply playback rate during scratch (deg/ms → rate).
+   * Normal disc speed ≈ 360°/16s = 22.5 deg/s = 0.0225 deg/ms.
+   * Pass 0 to reset to normal rate.
+   */
+  const scratchAudio = useCallback((degPerMs: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (degPerMs === 0) {
+      audio.playbackRate = 1.0;
+    } else {
+      const normalDegPerMs = 360 / (16 * 1000);
+      const rate = degPerMs / normalDegPerMs;
+      audio.playbackRate = Math.max(0.05, Math.min(3.5, rate));
+    }
+  }, []);
+
+  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio };
 }

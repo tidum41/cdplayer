@@ -33,7 +33,7 @@ export function AlbumCard({ album, isActive, artSize }: AlbumCardProps) {
           }}
         />
       </div>
-      <div className={styles.meta}>
+      <div className={styles.meta} style={{ width: artSize, maxWidth: artSize }}>
         <span className={styles.title}>{album.title}</span>
         <span className={styles.artist}>{album.artist}</span>
       </div>
