@@ -83,7 +83,7 @@ export const albums: Album[] = [
     title: 'B.Y.S.',
     artist: 'keshi',
     color: '#7A9888',
-    artUrl: '/music/keshi-always-cover.jpg',
-    // audioUrl: '/music/keshi-bys.mp3',  ← add the mp3 with this filename
+    artUrl: '/music/keshi-bys-cover.jpeg',
+    audioUrl: '/music/keshi - B.Y.S. (Audio).mp3',
   },
 ];
