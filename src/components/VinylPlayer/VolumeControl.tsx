@@ -1,6 +1,25 @@
+import React from 'react';
+
 interface VolumeControlProps {
   onVolumeUp: () => void;
   onVolumeDown: () => void;
+}
+
+function MinusIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
+      <rect x="5" y="12.5" width="18" height="3.5" rx="1.75" fill="rgba(0,0,0,0.52)" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
+      <rect x="5" y="12.5" width="18" height="3.5" rx="1.75" fill="rgba(0,0,0,0.52)" />
+      <rect x="12.5" y="5" width="3.5" height="18" rx="1.75" fill="rgba(0,0,0,0.52)" />
+    </svg>
+  );
 }
 
 export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) {
@@ -23,21 +42,6 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
     boxShadow: 'rgba(255,255,255,0.20) 0px 2px 0px inset, rgba(0,0,0,0.12) 0px -2px 0px inset',
     cursor: 'pointer',
     zIndex: 2,
-  };
-
-  const iconStyle: React.CSSProperties = {
-    rotate: '45deg',
-    fontSize: 38,
-    fontWeight: 900,
-    lineHeight: 1,
-    color: 'rgba(0,0,0,0.50)',
-    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-    pointerEvents: 'none',
   };
 
   return (
@@ -69,7 +73,7 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
         style={{ ...btnStyle, left: btnOffset }}
         onClick={(e) => { e.stopPropagation(); onVolumeDown(); }}
       >
-        <span style={iconStyle}>−</span>
+        <MinusIcon />
       </div>
 
       {/* Plus button */}
@@ -77,7 +81,7 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
         style={{ ...btnStyle, left: pillW - btnOffset - btnSize }}
         onClick={(e) => { e.stopPropagation(); onVolumeUp(); }}
       >
-        <span style={iconStyle}>+</span>
+        <PlusIcon />
       </div>
     </div>
   );

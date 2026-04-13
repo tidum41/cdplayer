@@ -18,13 +18,43 @@ export function useAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.7);
 
+  // Web Audio API refs
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceConnectedRef = useRef(false);
+
   const getAudio = useCallback(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.loop = true;
       audioRef.current.volume = volume;
+      audioRef.current.crossOrigin = 'anonymous';
     }
     return audioRef.current;
+  }, []);
+
+  /** Connect the audio element to an AnalyserNode (call once per audio element, on user gesture) */
+  const connectAudioGraph = useCallback((audio: HTMLAudioElement) => {
+    if (sourceConnectedRef.current) {
+      // Just resume context if needed
+      audioCtxRef.current?.resume();
+      return;
+    }
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.85;
+      const source = ctx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      sourceConnectedRef.current = true;
+      ctx.resume();
+    } catch {
+      // Web Audio not available — visualizer stays decorative
+    }
   }, []);
 
   useEffect(() => {
@@ -43,11 +73,14 @@ export function useAudio() {
     if (audio.src !== src) {
       audio.src = src;
     }
+    connectAudioGraph(audio);
     audio.play().catch(() => {});
-  }, [getAudio]);
+  }, [getAudio, connectAudioGraph]);
 
   const playAudio = useCallback(() => {
-    getAudio().play().catch(() => {});
+    const audio = getAudio();
+    audioCtxRef.current?.resume();
+    audio.play().catch(() => {});
   }, [getAudio]);
 
   const pauseAudio = useCallback(() => {
@@ -69,5 +102,5 @@ export function useAudio() {
     setVolume(v => Math.max(0, +(v - 0.1).toFixed(1)));
   }, []);
 
-  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume };
+  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef };
 }

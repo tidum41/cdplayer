@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
   border-bottom-right-radius: 42px;
   background-color: #B6B6B6;
   box-shadow:
@@ -85,10 +85,10 @@
 }
 
 .vizBar {
-  width: 4px;
-  height: 120px;
+  width: 5px;
+  height: 130px;
   background-color: rgba(0,0,0,0.08);
-  border-radius: 2px;
+  border-radius: 2.5px;
   position: relative;
   overflow: hidden;
   display: flex;

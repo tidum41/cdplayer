@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import styles from './TransportBar.module.css';
 
 interface TransportBarProps {
@@ -6,6 +7,7 @@ interface TransportBarProps {
   onPause: () => void;
   onEject: () => void;
   hasDisc: boolean;
+  analyserRef?: React.RefObject<AnalyserNode | null>;
 }
 
 function PauseIcon() {
@@ -34,7 +36,49 @@ function EjectIcon() {
   );
 }
 
-export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc }: TransportBarProps) {
+// Number of visualizer bars
+const NUM_BARS = 2;
+// Which FFT bins to sample for each bar (low and high freq)
+const FREQ_BINS = [3, 12];
+
+export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, analyserRef }: TransportBarProps) {
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rafRef = useRef<number>(0);
+  const dataRef = useRef<Uint8Array | null>(null);
+
+  useEffect(() => {
+    const analyser = analyserRef?.current;
+
+    if (!isPlaying || !analyser) {
+      cancelAnimationFrame(rafRef.current);
+      // Reset bars to idle heights
+      barRefs.current.forEach((bar, i) => {
+        if (bar) bar.style.height = `${12 + i * 6}%`;
+      });
+      return;
+    }
+
+    if (!dataRef.current || dataRef.current.length !== analyser.frequencyBinCount) {
+      dataRef.current = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
+    }
+
+    const animate = () => {
+      analyser.getByteFrequencyData(dataRef.current! as Uint8Array<ArrayBuffer>);
+      barRefs.current.forEach((bar, i) => {
+        if (!bar) return;
+        const bin = FREQ_BINS[i] ?? 4;
+        const raw = dataRef.current![bin] ?? 0;
+        // Map 0-255 to 10%-95% height
+        const pct = 10 + (raw / 255) * 85;
+        bar.style.height = `${pct}%`;
+      });
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [isPlaying, analyserRef]);
+
   return (
     <div className={styles.bar}>
       <button className={`${styles.btn} ${styles.btnFirst}`} onClick={onPause}>
@@ -52,12 +96,15 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc }: T
 
       {/* Audio visualizer section */}
       <div className={styles.vizSection}>
-        <div className={styles.vizBar}>
-          <div className={`${styles.vizFill} ${styles.vizFill1} ${isPlaying ? styles.vizActive : ''}`} />
-        </div>
-        <div className={styles.vizBar}>
-          <div className={`${styles.vizFill} ${styles.vizFill2} ${isPlaying ? styles.vizActive : ''}`} />
-        </div>
+        {Array.from({ length: NUM_BARS }).map((_, i) => (
+          <div key={i} className={styles.vizBar}>
+            <div
+              ref={el => { barRefs.current[i] = el; }}
+              className={`${styles.vizFill} ${isPlaying && !analyserRef?.current ? styles.vizActive : ''} ${i === 0 ? styles.vizFill1 : i === 1 ? styles.vizFill2 : ''}`}
+              style={{ height: `${12 + i * 6}%` }}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

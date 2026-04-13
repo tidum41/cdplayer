@@ -1,13 +1,14 @@
 /**
  * Lightweight drag-ghost disc: donut shape with transparent center hole.
- * No border outline, no arcs. Just a flat ring.
+ * No border outline, no arcs. Just a flat ring using the album's color.
  */
 
 interface DragDiscProps {
   size: number;
+  color?: string;
 }
 
-export function DragDisc({ size }: DragDiscProps) {
+export function DragDisc({ size, color = '#B0B0B0' }: DragDiscProps) {
   const cx = size / 2;
   const holeR = size * 0.125; // center hole radius
   const discR = size / 2;
@@ -35,7 +36,8 @@ export function DragDisc({ size }: DragDiscProps) {
           `A ${holeR} ${holeR} 0 1 0 ${cx + holeR} ${cx}`,
           `Z`,
         ].join(' ')}
-        fill="#B0B0B0"
+        fill={color}
+        fillOpacity={0.85}
       />
     </svg>
   );

@@ -4,8 +4,11 @@
   height: 835px;
   border-radius: calc(infinity * 1px);
   background-color: #B8B8B8;
-  /* Layered 2D depth: thick inset ring, top highlight edge, bottom shadow edge, side tones */
+  /* Outer rim: hard bottom shadow + top highlight = raised disc illusion */
+  /* Inner: thick inset ring, top highlight edge, bottom shadow edge */
   box-shadow:
+    rgba(0,0,0,0.16) 0px 4px 0px,
+    rgba(255,255,255,0.10) 0px -2px 0px,
     rgba(0,0,0,0.58) 0px 0px 0px 5px inset,
     rgba(0,0,0,0.10) 0px 10px 0px inset,
     rgba(0,0,0,0.06) 0px 18px 0px inset,
@@ -24,6 +27,8 @@
 
 .platter.over {
   box-shadow:
+    rgba(0,0,0,0.16) 0px 4px 0px,
+    rgba(255,255,255,0.10) 0px -2px 0px,
     rgba(0,0,0,0.78) 0px 0px 0px 6px inset,
     rgba(0,0,0,0.12) 0px 10px 0px inset,
     rgba(0,0,0,0.06) 0px 18px 0px inset,

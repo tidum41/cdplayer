@@ -12,6 +12,7 @@ import {
 import { VinylPlayer } from './components/VinylPlayer/VinylPlayer';
 import { AlbumGrid } from './components/AlbumGrid/AlbumGrid';
 import { DragDisc } from './components/Disc/DragDisc';
+import { AudioConsent } from './components/AudioConsent/AudioConsent';
 import { usePlayerState } from './hooks/usePlayerState';
 import { useAudio } from './hooks/useAudio';
 import type { Album } from './data/albums';
@@ -23,33 +24,41 @@ const PLATTER_SIZE = 835;
 
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
-  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown } = useAudio();
+  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef } = useAudio();
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
   const [dragDiscSize, setDragDiscSize] = useState(120);
+  // null = not yet chosen, true = audio on, false = muted
+  const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
+  // Popup shown only when first track is dropped
+  const [showConsent, setShowConsent] = useState(false);
+  const pendingAlbumRef = useRef<Album | null>(null);
 
   const platterCenterRef = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Scale player to fit: max 60% viewport height, and leave room for grid
   const updateScale = useCallback(() => {
-    const maxH = window.innerHeight * 0.60;
-    const maxW = window.innerWidth * 0.28; // player gets ~28% of viewport width
-    const s = Math.min(1, maxW / PLAYER_W, maxH / PLAYER_H);
+    const availH = (containerRef.current?.clientHeight ?? window.innerHeight) * 0.92;
+    const availW = (containerRef.current?.clientWidth ?? window.innerWidth) * 0.28;
+    const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
     setScale(Math.max(0.2, s));
   }, []);
 
   useEffect(() => {
     updateScale();
     window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    const ro = new ResizeObserver(updateScale);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      ro.disconnect();
+    };
   }, [updateScale]);
 
   const updatePlatterCenter = useCallback(() => {
     if (!containerRef.current) return;
-    // Find the player sizer div
     const sizer = containerRef.current.querySelector('[data-player-sizer]') as HTMLElement;
     if (!sizer) return;
     const rect = sizer.getBoundingClientRect();
@@ -73,10 +82,8 @@ export default function App() {
     const pe = event.activatorEvent as PointerEvent;
     const cursorX = pe.clientX + (event.delta?.x ?? 0);
     const cursorY = pe.clientY + (event.delta?.y ?? 0);
-
     const pc = platterCenterRef.current;
     const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
-
     const maxDist = 500;
     const targetSize = PLATTER_SIZE * scale;
     const minSize = 120;
@@ -84,107 +91,144 @@ export default function App() {
     setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
   }
 
+  /** Shared logic for loading an album after consent is resolved */
+  const loadAlbumWithAudio = useCallback((album: Album, withAudio: boolean) => {
+    loadAlbum(album);
+    setIsLoading(true);
+    setSnapAnim(true);
+    setTimeout(() => setSnapAnim(false), 500);
+    setTimeout(() => {
+      setIsLoading(false);
+      play();
+      if (withAudio) loadAndPlay(album);
+    }, 1300);
+  }, [loadAlbum, play, loadAndPlay]);
+
   function handleDragEnd(event: DragEndEvent) {
     const droppedOnPlatter =
       event.over?.id === 'platter' && event.active.data.current?.album;
 
     if (droppedOnPlatter) {
       const album = event.active.data.current!.album as Album;
-      loadAlbum(album);
-      setIsLoading(true);
-      setSnapAnim(true);
-      setTimeout(() => setSnapAnim(false), 500);
-      setTimeout(() => {
-        setIsLoading(false);
-        play();
-        loadAndPlay(album);
-      }, 1300);
+
+      if (audioEnabled === null) {
+        // First track — show consent popup, hold album in pending
+        pendingAlbumRef.current = album;
+        setShowConsent(true);
+      } else {
+        loadAlbumWithAudio(album, audioEnabled);
+      }
     }
 
     setDragAlbum(null);
     setDragDiscSize(120);
   }
 
+  const handleConsentAccept = useCallback(() => {
+    setAudioEnabled(true);
+    setShowConsent(false);
+    const album = pendingAlbumRef.current;
+    pendingAlbumRef.current = null;
+    if (album) loadAlbumWithAudio(album, true);
+  }, [loadAlbumWithAudio]);
+
+  const handleConsentDecline = useCallback(() => {
+    setAudioEnabled(false);
+    setShowConsent(false);
+    const album = pendingAlbumRef.current;
+    pendingAlbumRef.current = null;
+    if (album) loadAlbumWithAudio(album, false);
+  }, [loadAlbumWithAudio]);
+
   const handlePlay = useCallback(() => {
-    if (activeAlbum) { play(); playAudio(); }
-  }, [activeAlbum, play, playAudio]);
+    if (activeAlbum) {
+      play();
+      if (audioEnabled !== false) playAudio();
+    }
+  }, [activeAlbum, play, playAudio, audioEnabled]);
 
   const handlePause = useCallback(() => {
-    pause(); pauseAudio();
-  }, [pause, pauseAudio]);
+    pause();
+    if (audioEnabled !== false) pauseAudio();
+  }, [pause, pauseAudio, audioEnabled]);
 
   const handleEject = useCallback(() => {
-    eject(); stopAudio();
-  }, [eject, stopAudio]);
+    eject();
+    if (audioEnabled !== false) stopAudio();
+  }, [eject, stopAudio, audioEnabled]);
 
   const playerHeight = PLAYER_H * scale;
-  const gridHeight = playerHeight + 56; // slightly taller than player
+  const gridHeight = playerHeight - 24;
   const gridGap = 14;
   const metaH = 30;
   const artSize = Math.max(60, Math.floor((gridHeight - gridGap * 2) / 3 - metaH));
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-    >
-      <div className={styles.layout} ref={containerRef}>
-        <div className={styles.contentBox}>
-          {/* CD Player */}
-          <div className={styles.playerCol}>
-            <div
-              data-player-sizer
-              style={{ width: PLAYER_W * scale, height: playerHeight, flexShrink: 0 }}
-            >
-              <div style={{
-                width: PLAYER_W,
-                height: PLAYER_H,
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-              }}>
-                <VinylPlayer
-                  activeAlbum={activeAlbum}
-                  isPlaying={isPlaying}
-                  isLoading={isLoading}
-                  onPlay={handlePlay}
-                  onPause={handlePause}
-                  onEject={handleEject}
-                  onVolumeUp={volumeUp}
-                  onVolumeDown={volumeDown}
-                  snapAnim={snapAnim}
-                />
+    <>
+      {showConsent && (
+        <AudioConsent
+          onAccept={handleConsentAccept}
+          onDecline={handleConsentDecline}
+        />
+      )}
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+      >
+        <div className={styles.layout} ref={containerRef}>
+          <div className={styles.contentBox}>
+            <div className={styles.playerCol}>
+              <div
+                data-player-sizer
+                style={{ width: PLAYER_W * scale, height: playerHeight, flexShrink: 0 }}
+              >
+                <div style={{
+                  width: PLAYER_W,
+                  height: PLAYER_H,
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'top left',
+                }}>
+                  <VinylPlayer
+                    activeAlbum={activeAlbum}
+                    isPlaying={isPlaying}
+                    isLoading={isLoading}
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onEject={handleEject}
+                    onVolumeUp={volumeUp}
+                    onVolumeDown={volumeDown}
+                    snapAnim={snapAnim}
+                    volume={volume}
+                    analyserRef={analyserRef}
+                  />
+                </div>
               </div>
             </div>
-            {/* CTA — only when no disc is loaded */}
-            {!activeAlbum && !dragAlbum && (
-              <span className={styles.ctaHint}>drag a cd onto the player</span>
-            )}
-          </div>
 
-          {/* Album Grid */}
-          <div className={styles.gridCol}>
-            <AlbumGrid
-              activeAlbumId={activeAlbum?.id ?? null}
-              gridHeight={gridHeight}
-              artSize={artSize}
-            />
+            <div className={styles.gridCol}>
+              <AlbumGrid
+                activeAlbumId={activeAlbum?.id ?? null}
+                gridHeight={gridHeight}
+                artSize={artSize}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <DragOverlay dropAnimation={null}>
-        {dragAlbum ? (
-          <div style={{
-            width: dragDiscSize,
-            height: dragDiscSize,
-            transition: 'width 0.15s ease-out, height 0.15s ease-out',
-          }}>
-            <DragDisc size={dragDiscSize} />
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay dropAnimation={null}>
+          {dragAlbum ? (
+            <div style={{
+              width: dragDiscSize,
+              height: dragDiscSize,
+              transition: 'width 0.15s ease-out, height 0.15s ease-out',
+            }}>
+              <DragDisc size={dragDiscSize} color={dragAlbum.color} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </>
   );
 }

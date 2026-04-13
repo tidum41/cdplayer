@@ -48,6 +48,23 @@
   text-overflow: ellipsis;
 }
 
+/* Volume display — speaker icon + percentage, no animation */
+.volBlock {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volPct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 38px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
 .line2Row {
   display: flex;
   align-items: baseline;
@@ -77,63 +94,63 @@
   flex-shrink: 0;
 }
 
-/* --- Loading: equalizer bars --- */
+/* --- Loading: equalizer bars (wider, fills more of the display) --- */
 .loadingBlock {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   align-items: flex-start;
 }
 
 .eqBars {
   display: flex;
   align-items: flex-end;
-  justify-content: flex-start;
-  gap: 5px;
-  height: 40px;
+  gap: 6px;
+  height: 50px;
+  width: 100%;
 }
 
 .eqBar {
-  width: 5px;
-  border-radius: 1.5px;
-  background-color: rgba(255, 255, 255, 0.65);
-  height: 6px;
+  flex: 1;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.60);
+  height: 8px;
 }
 
-/* Smooth ascending wave — each bar is taller than the last,
-   all on slow sinusoidal timing */
+/* Smooth wave — 7 bars fill the width */
 @keyframes eq1 {
-  0%, 100% { height: 6px; }
-  50% { height: 14px; }
-}
-@keyframes eq2 {
   0%, 100% { height: 8px; }
   50% { height: 20px; }
 }
-@keyframes eq3 {
+@keyframes eq2 {
   0%, 100% { height: 10px; }
-  50% { height: 26px; }
+  50% { height: 30px; }
+}
+@keyframes eq3 {
+  0%, 100% { height: 12px; }
+  50% { height: 40px; }
 }
 @keyframes eq4 {
-  0%, 100% { height: 12px; }
-  50% { height: 32px; }
+  0%, 100% { height: 16px; }
+  50% { height: 50px; }
 }
 @keyframes eq5 {
-  0%, 100% { height: 14px; }
-  50% { height: 38px; }
+  0%, 100% { height: 12px; }
+  50% { height: 40px; }
+}
+@keyframes eq6 {
+  0%, 100% { height: 10px; }
+  50% { height: 30px; }
+}
+@keyframes eq7 {
+  0%, 100% { height: 8px; }
+  50% { height: 20px; }
 }
 
-.eq1 { animation: eq1 1.6s ease-in-out infinite; animation-delay: 0s; }
-.eq2 { animation: eq2 1.6s ease-in-out infinite; animation-delay: 0.1s; }
-.eq3 { animation: eq3 1.6s ease-in-out infinite; animation-delay: 0.2s; }
-.eq4 { animation: eq4 1.6s ease-in-out infinite; animation-delay: 0.3s; }
-.eq5 { animation: eq5 1.6s ease-in-out infinite; animation-delay: 0.4s; }
-
-.loadingText {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.30);
-  letter-spacing: 3px;
-}
+.eq1 { animation: eq1 1.4s ease-in-out infinite; animation-delay: 0s; }
+.eq2 { animation: eq2 1.4s ease-in-out infinite; animation-delay: 0.08s; }
+.eq3 { animation: eq3 1.4s ease-in-out infinite; animation-delay: 0.16s; }
+.eq4 { animation: eq4 1.4s ease-in-out infinite; animation-delay: 0.24s; }
+.eq5 { animation: eq5 1.4s ease-in-out infinite; animation-delay: 0.32s; }
+.eq6 { animation: eq6 1.4s ease-in-out infinite; animation-delay: 0.40s; }
+.eq7 { animation: eq7 1.4s ease-in-out infinite; animation-delay: 0.48s; }
