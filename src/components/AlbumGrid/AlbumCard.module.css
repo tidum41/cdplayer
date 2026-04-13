@@ -5,11 +5,12 @@
   cursor: grab;
   user-select: none;
   min-height: 0;
+  overflow: hidden; /* prevent text from bleeding into adjacent cards */
+  flex-shrink: 0;   /* don't shrink in strip mode */
 }
 
 .card:active { cursor: grabbing; }
 
-/* No border-radius on album art */
 .artWrap {
   position: relative;
   overflow: hidden;
@@ -23,12 +24,15 @@
   background-position: center;
 }
 
-/* Text below art, left-aligned */
+/* Text below art — constrained to card width */
 .meta {
   display: flex;
   flex-direction: column;
   gap: 1px;
   flex-shrink: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .title {
@@ -40,6 +44,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 .artist {
@@ -51,6 +57,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 /* When being dragged, card dims to show CD left */

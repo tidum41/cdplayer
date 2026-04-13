@@ -11,7 +11,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Full container — fills iframe/viewport, centers the horizontal box */
+/* ── Desktop / Horizontal layout ─────────────────────────────────────── */
+
 .layout {
   display: flex;
   align-items: center;
@@ -22,14 +23,12 @@ body {
   overflow: hidden;
 }
 
-/* The horizontal content box — player + grid side by side */
 .contentBox {
   display: flex;
   align-items: center;
   gap: 32px;
 }
 
-/* Player column — holds the scaled player, no flex-grow */
 .playerCol {
   flex: 0 0 auto;
   display: flex;
@@ -38,7 +37,6 @@ body {
   position: relative;
 }
 
-/* Grid column — centered vertically with the player */
 .gridCol {
   flex: 0 0 auto;
   display: flex;
@@ -46,4 +44,43 @@ body {
   align-items: flex-start;
   justify-content: center;
   position: relative;
+}
+
+/* ── Mobile / Vertical layout (<500px width) ──────────────────────────── */
+
+.layoutVertical {
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  overflow: hidden;
+  /* no min-height override — fits in iframe */
+}
+
+.contentBoxVertical {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding-top: 12px;
+}
+
+.playerColVertical {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.gridColVertical {
+  flex: 0 0 auto;
+  width: 100%;
+  overflow: hidden;
+  /* Hide webkit scrollbar on the strip */
+}
+
+/* Hide scrollbar inside strip (webkit) */
+.gridColVertical ::-webkit-scrollbar {
+  display: none;
 }

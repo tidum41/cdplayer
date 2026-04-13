@@ -21,6 +21,7 @@ import styles from './App.module.css';
 const PLAYER_W = 893;
 const PLAYER_H = 1321;
 const PLATTER_SIZE = 835;
+const MOBILE_BREAKPOINT = 500; // px — below this, switch to vertical layout
 
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
@@ -30,9 +31,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
   const [dragDiscSize, setDragDiscSize] = useState(120);
-  // null = not yet chosen, true = audio on, false = muted
+  const [isVertical, setIsVertical] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
-  // Popup shown only when first track is dropped
   const [showConsent, setShowConsent] = useState(false);
   const pendingAlbumRef = useRef<Album | null>(null);
 
@@ -40,10 +40,26 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const updateScale = useCallback(() => {
-    const availH = (containerRef.current?.clientHeight ?? window.innerHeight) * 0.92;
-    const availW = (containerRef.current?.clientWidth ?? window.innerWidth) * 0.28;
-    const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
-    setScale(Math.max(0.2, s));
+    const el = containerRef.current;
+    const W = el?.clientWidth  ?? window.innerWidth;
+    const H = el?.clientHeight ?? window.innerHeight;
+
+    const vertical = W < MOBILE_BREAKPOINT;
+    setIsVertical(vertical);
+
+    if (vertical) {
+      // Vertical: player fills ~90% of width, capped at 50% height
+      const availW = W * 0.90;
+      const availH = H * 0.52;
+      const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
+      setScale(Math.max(0.14, s));
+    } else {
+      // Horizontal: player gets ~28% of width, 90% of height
+      const availW = W * 0.28;
+      const availH = H * 0.90;
+      const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
+      setScale(Math.max(0.2, s));
+    }
   }, []);
 
   useEffect(() => {
@@ -91,7 +107,6 @@ export default function App() {
     setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
   }
 
-  /** Shared logic for loading an album after consent is resolved */
   const loadAlbumWithAudio = useCallback((album: Album, withAudio: boolean) => {
     loadAlbum(album);
     setIsLoading(true);
@@ -110,9 +125,7 @@ export default function App() {
 
     if (droppedOnPlatter) {
       const album = event.active.data.current!.album as Album;
-
       if (audioEnabled === null) {
-        // First track — show consent popup, hold album in pending
         pendingAlbumRef.current = album;
         setShowConsent(true);
       } else {
@@ -141,35 +154,36 @@ export default function App() {
   }, [loadAlbumWithAudio]);
 
   const handlePlay = useCallback(() => {
-    if (activeAlbum) {
-      play();
-      if (audioEnabled !== false) playAudio();
-    }
+    if (activeAlbum) { play(); if (audioEnabled !== false) playAudio(); }
   }, [activeAlbum, play, playAudio, audioEnabled]);
 
   const handlePause = useCallback(() => {
-    pause();
-    if (audioEnabled !== false) pauseAudio();
+    pause(); if (audioEnabled !== false) pauseAudio();
   }, [pause, pauseAudio, audioEnabled]);
 
   const handleEject = useCallback(() => {
-    eject();
-    if (audioEnabled !== false) stopAudio();
+    eject(); if (audioEnabled !== false) stopAudio();
   }, [eject, stopAudio, audioEnabled]);
 
+  // ── Layout math ────────────────────────────────────────────────────────────
   const playerHeight = PLAYER_H * scale;
-  const gridHeight = playerHeight - 24;
-  const gridGap = 14;
-  const metaH = 30;
-  const artSize = Math.max(60, Math.floor((gridHeight - gridGap * 2) / 3 - metaH));
+
+  // Desktop: 3-column grid sized to match player height
+  const GRID_GAP = 14;
+  const META_H = 30;
+  const desktopArtSize = Math.max(60, Math.floor((playerHeight - 24 - GRID_GAP * 2) / 3 - META_H));
+
+  // Mobile: horizontal strip with fixed art size
+  const MOBILE_ART = 82;
+
+  const artSize  = isVertical ? MOBILE_ART : desktopArtSize;
+  const gridMode = isVertical ? 'strip' : 'grid';
+  const gridHeight = isVertical ? MOBILE_ART + META_H + 8 : playerHeight - 24;
 
   return (
     <>
       {showConsent && (
-        <AudioConsent
-          onAccept={handleConsentAccept}
-          onDecline={handleConsentDecline}
-        />
+        <AudioConsent onAccept={handleConsentAccept} onDecline={handleConsentDecline} />
       )}
       <DndContext
         sensors={sensors}
@@ -177,9 +191,14 @@ export default function App() {
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
       >
-        <div className={styles.layout} ref={containerRef}>
-          <div className={styles.contentBox}>
-            <div className={styles.playerCol}>
+        <div
+          className={`${styles.layout} ${isVertical ? styles.layoutVertical : ''}`}
+          ref={containerRef}
+        >
+          <div className={`${styles.contentBox} ${isVertical ? styles.contentBoxVertical : ''}`}>
+
+            {/* CD Player */}
+            <div className={`${styles.playerCol} ${isVertical ? styles.playerColVertical : ''}`}>
               <div
                 data-player-sizer
                 style={{ width: PLAYER_W * scale, height: playerHeight, flexShrink: 0 }}
@@ -207,13 +226,16 @@ export default function App() {
               </div>
             </div>
 
-            <div className={styles.gridCol}>
+            {/* Album Grid / Strip */}
+            <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
                 gridHeight={gridHeight}
                 artSize={artSize}
+                mode={gridMode}
               />
             </div>
+
           </div>
         </div>
 

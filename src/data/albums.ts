@@ -5,25 +5,11 @@
  *   - id:       Unique string (any value)
  *   - title:    Song or album title
  *   - artist:   Artist name
- *   - color:    Fallback color for album art (hex)
- *   - artUrl:   (optional) Path to album art image — place files in /public/art/
- *   - audioUrl: (optional) Path to MP3 file — place files in /public/audio/
+ *   - color:    Dominant color from album art (hex) — shown during drag + as fallback
+ *   - artUrl:   (optional) Path to cover image in /public/music/
+ *   - audioUrl: (optional) Path to MP3 in /public/music/
  *
- * Example with local files:
- *   {
- *     id: 'custom-1',
- *     title: 'My Song',
- *     artist: 'My Artist',
- *     color: '#4A7B8C',
- *     artUrl: '/art/my-album.jpg',
- *     audioUrl: '/audio/my-song.mp3',
- *   }
- *
- * To add your own music:
- *   1. Create folders: /public/art/ and /public/audio/
- *   2. Drop album art images and MP3 files there
- *   3. Reference them with paths like '/art/filename.jpg' and '/audio/filename.mp3'
- *   4. For external URLs, use full https:// paths
+ * TIP: Run `npm run sync-music` to auto-generate entries from files in /public/music/
  */
 
 export interface Album {
@@ -40,56 +26,72 @@ export const albums: Album[] = [
     id: '1',
     title: 'flash in the pan',
     artist: 'jane remover',
-    color: '#7B6E8A',
-artUrl: '/art/flashinthepanart.jpeg',
-audioUrl: '/audio/flashinthepanaudio.mp3'
+    color: '#8475A0',
+    artUrl: '/music/janeremover-flashinthepan-cover.jpeg',
+    audioUrl: '/music/janeremover-flashinthepan.mp3',
   },
   {
     id: '2',
-    title: 'Blonde',
-    artist: 'Frank Ocean',
-    color: '#C8A882',
+    title: 'Noblest Strive',
+    artist: 'Bladee',
+    color: '#A8B8B0',
+    artUrl: '/music/bladee-nobleststrive-cover.jpeg',
+    audioUrl: '/music/Bladee - Noblest Strive.mp3',
   },
   {
     id: '3',
-    title: 'DAMN.',
-    artist: 'Kendrick Lamar',
-    color: '#8B2020',
+    title: 'Calcium',
+    artist: 'Ecco2K',
+    color: '#C8C4C0',
+    artUrl: '/music/ecco2k-calcium-cover.svg',
+    audioUrl: '/music/Ecco2K - Calcium.mp3',
   },
   {
     id: '4',
-    title: 'Currents',
-    artist: 'Tame Impala',
-    color: '#4A7B8C',
+    title: 'Jupiter',
+    artist: 'The Marías',
+    color: '#B87888',
+    artUrl: '/music/themarias-jupiter-cover.jpg',
+    audioUrl: '/music/The Marías - Jupiter.mp3',
   },
   {
     id: '5',
-    title: 'good kid, m.A.A.d city',
-    artist: 'Kendrick Lamar',
-    color: '#3A4A6B',
+    title: 'dazies',
+    artist: 'yeule',
+    color: '#A898C0',
+    artUrl: '/music/Yeule-dazies-cover.webp',
+    audioUrl: '/music/yeule - dazies.mp3',
   },
   {
     id: '6',
-    title: 'To Pimp a Butterfly',
-    artist: 'Kendrick Lamar',
-    color: '#2D5A3D',
+    title: "Hennessy & Sailor Moon",
+    artist: 'Yung Lean & Bladee',
+    color: '#7890A8',
+    artUrl: '/music/bladeeyunglean-hennesyandsailormoon-cover.jpg',
+    audioUrl: '/music/Yung Lean - Hennessy & Sailor Moon (Feat. Bladee) [Prod. Acea].mp3',
   },
   {
     id: '7',
-    title: 'Kid A',
-    artist: 'Radiohead',
-    color: '#4A6B8A',
+    title: "Can't Get Over You",
+    artist: 'joji',
+    color: '#907868',
+    artUrl: '/music/joji-cantgetoveryou-cover.jpg',
+    audioUrl: '/music/joji-cantgetoveryouaudio.mp3',
   },
   {
     id: '8',
-    title: 'channel ORANGE',
-    artist: 'Frank Ocean',
-    color: '#C47A2A',
+    title: 'Golden',
+    artist: 'kpop demon hunters',
+    color: '#C8A030',
+    artUrl: '/music/kpopdemonhunters-cover.jpg',
+    audioUrl: '/music/kpopdemonhunters-golden.mp3',
   },
   {
     id: '9',
-    title: 'Random Access Memories',
-    artist: 'Daft Punk',
-    color: '#6B5A3E',
+    title: 'Always',
+    artist: 'keshi',
+    color: '#7A9888',
+    artUrl: '/music/keshi-always-cover.jpg',
+    // audioUrl missing — add keshi-always.mp3 to /public/music/ to fix
   },
 ];
