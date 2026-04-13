@@ -1,0 +1,133 @@
+.bar {
+  position: absolute;
+  bottom: -1px;
+  left: -1px;
+  right: -1px;
+  height: 271px;
+  display: flex;
+  border-top: 3px solid rgba(0, 0, 0, 0.30);
+}
+
+.btn {
+  flex: 1 0 0%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 52px;
+  position: relative;
+  background-color: #B6B6B6;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  /* Inner shadows for 3D depth — no blur, purely 2D */
+  box-shadow:
+    rgba(255,255,255,0.22) 0px 2px 0px inset,
+    rgba(0,0,0,0.14) 0px -3px 0px inset,
+    rgba(0,0,0,0.06) 3px 0px 0px inset,
+    rgba(0,0,0,0.06) -3px 0px 0px inset;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Dividers between buttons */
+.btn + .btn {
+  border-left: 2px solid rgba(0, 0, 0, 0.18);
+}
+
+.btnFirst {
+  border-bottom-left-radius: 42px;
+}
+
+.btnThird {
+  border-right: 2px solid rgba(0, 0, 0, 0.18);
+}
+
+/* Orange recording dot */
+.orangeDot {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #E8652D;
+}
+
+/* Tactile press */
+.btn:active:not(:disabled) {
+  transform: translateY(7px);
+  background-color: #959595;
+  box-shadow:
+    rgba(0,0,0,0.30) 0px 5px 0px inset,
+    rgba(0,0,0,0.10) 3px 0px 0px inset,
+    rgba(0,0,0,0.10) -3px 0px 0px inset;
+  transition: transform 0.04s ease, background-color 0.04s ease;
+}
+
+/* --- Audio Visualizer Section --- */
+.vizSection {
+  flex: 0 0 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-bottom-right-radius: 42px;
+  background-color: #B6B6B6;
+  box-shadow:
+    rgba(255,255,255,0.22) 0px 2px 0px inset,
+    rgba(0,0,0,0.14) 0px -3px 0px inset;
+}
+
+.vizBar {
+  width: 4px;
+  height: 120px;
+  background-color: rgba(0,0,0,0.08);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.vizFill {
+  width: 100%;
+  border-radius: 2px;
+  background-color: rgba(0,0,0,0.25);
+  height: 8px;
+  transition: height 0.15s ease;
+}
+
+.vizFill.vizActive {
+  background-color: rgba(0,0,0,0.35);
+}
+
+.vizFill1.vizActive {
+  animation: bar1 1.4s ease-in-out infinite;
+}
+
+.vizFill2.vizActive {
+  animation: bar2 1.1s ease-in-out infinite;
+}
+
+@keyframes bar1 {
+  0%, 100% { height: 15%; }
+  15% { height: 72%; }
+  35% { height: 28%; }
+  55% { height: 85%; }
+  75% { height: 40%; }
+}
+
+@keyframes bar2 {
+  0%, 100% { height: 22%; }
+  20% { height: 55%; }
+  40% { height: 90%; }
+  60% { height: 32%; }
+  80% { height: 68%; }
+}

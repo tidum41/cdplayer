@@ -1,0 +1,44 @@
+.platter {
+  position: absolute;
+  width: 835px;
+  height: 835px;
+  border-radius: calc(infinity * 1px);
+  background-color: #B8B8B8;
+  /* Layered 2D depth: thick inset ring, top highlight edge, bottom shadow edge, side tones */
+  box-shadow:
+    rgba(0,0,0,0.58) 0px 0px 0px 5px inset,
+    rgba(0,0,0,0.10) 0px 10px 0px inset,
+    rgba(0,0,0,0.06) 0px 18px 0px inset,
+    rgba(255,255,255,0.16) 0px -4px 0px inset,
+    rgba(255,255,255,0.08) 0px -10px 0px inset,
+    rgba(0,0,0,0.04) 8px 0px 0px inset,
+    rgba(0,0,0,0.04) -8px 0px 0px inset;
+  left: 50%;
+  top: 120px;
+  translate: -50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.15s ease;
+}
+
+.platter.over {
+  box-shadow:
+    rgba(0,0,0,0.78) 0px 0px 0px 6px inset,
+    rgba(0,0,0,0.12) 0px 10px 0px inset,
+    rgba(0,0,0,0.06) 0px 18px 0px inset,
+    rgba(255,255,255,0.16) 0px -4px 0px inset,
+    rgba(255,255,255,0.08) 0px -10px 0px inset,
+    rgba(0,0,0,0.04) 8px 0px 0px inset,
+    rgba(0,0,0,0.04) -8px 0px 0px inset;
+}
+
+@keyframes snapIn {
+  0% { transform: scale(1.05); }
+  45% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+.platter.snapIn {
+  animation: snapIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
