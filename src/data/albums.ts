@@ -41,8 +41,8 @@ export const albums: Album[] = [
     title: 'flash in the pan',
     artist: 'jane remover',
     color: '#7B6E8A',
-    // artUrl: '/flashinthepanart.jpg',
-    // audioUrl: '/audio/flashinthepanaudio.mp3',
+artUrl: '/art/flashinthepanart.jpeg',
+audioUrl: '/audio/flashinthepanaudio.mp3'
   },
   {
     id: '2',
