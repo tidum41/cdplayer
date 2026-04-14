@@ -51,24 +51,26 @@ export default function App() {
   const updateScale = useCallback(() => {
     const el = containerRef.current;
     const W = el?.clientWidth  ?? window.innerWidth;
-    const H = el?.clientHeight ?? window.innerHeight;
+    const H = el?.offsetHeight ?? window.innerHeight;
 
     const vertical = W < MOBILE_BREAKPOINT;
     setIsVertical(vertical);
 
     if (vertical) {
-      // Vertical: player width 95% of container, height constraint completely relaxed (80%) to maximize player
+      // Vertical: Player scaling accurately offsets static heights needed for carousel and padding.
+      // 120 (art) + 65 (text) + 32 (padding) + gaps = roughly 250px hard-allocated space.
+      const RESERVED_CAROUSEL_H = 280;
       const availW = W * 0.95;
-      const availH = H * 0.80;
+      const availH = Math.max(100, H - RESERVED_CAROUSEL_H);
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
-      setScale(Math.max(0.14, s));
+      setScale(Math.max(0.12, s));
     } else {
       // Horizontal: prefer a fixed ~370px player width; only shrink for tight viewports
       const targetScale = TARGET_PLAYER_W_PX / PLAYER_W;
       const maxFromW = (W * 0.50) / PLAYER_W; // never exceed 50% of viewport width
-      const maxFromH = (H * 0.94) / PLAYER_H;
+      const maxFromH = Math.max(0.12, (H - 32) / PLAYER_H); // Player strictly restrained by parent height minus padding
       const s = Math.min(targetScale, maxFromW, maxFromH);
-      setScale(Math.max(0.2, s));
+      setScale(Math.max(0.14, s));
     }
   }, []);
 
@@ -82,6 +84,32 @@ export default function App() {
       ro.disconnect();
     };
   }, [updateScale]);
+
+  useEffect(() => {
+    // Hide system cursor when embedded in a Framer iframe so Framer's custom cursor shows
+    if (window.self !== window.top) {
+      document.body.style.cursor = 'none';
+    }
+
+    function handleMessage(e: MessageEvent) {
+      const { type, x, y } = (e.data ?? {}) as { type?: string; x?: number; y?: number };
+      if (typeof type !== 'string' || !type.startsWith('framer-') || x == null || y == null) return;
+      const target = document.elementFromPoint(x, y);
+      if (!target) return;
+      const init: PointerEventInit = { bubbles: true, cancelable: true, clientX: x, clientY: y, pointerId: 1 };
+      switch (type) {
+        case 'framer-pointerdown': target.dispatchEvent(new PointerEvent('pointerdown', init)); break;
+        case 'framer-pointermove': target.dispatchEvent(new PointerEvent('pointermove', init)); break;
+        case 'framer-pointerup':   target.dispatchEvent(new PointerEvent('pointerup',   init)); break;
+        case 'framer-click':
+          target.dispatchEvent(new PointerEvent('pointerdown', init));
+          target.dispatchEvent(new PointerEvent('pointerup',   init));
+          target.dispatchEvent(new MouseEvent('click', init)); break;
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const updatePlatterCenter = useCallback(() => {
     if (!containerRef.current) return;
@@ -219,14 +247,21 @@ export default function App() {
   let gridWidth: number;
 
   if (isVertical) {
-    // Vertical: single-row carousel, use a fixed size that looks good on mobile
-    artSize = 140; 
+    // Vertical: single-row carousel, use a fixed size that fits safely in mobile
+    artSize = 120; 
     gridWidth = 0; // Not used in carousel mode
   } else {
-    // Horizontal: grid height matches player height — artSize from both axes
+    // Horizontal: grid mathematically constrained by BOTH width and height to prevent scrolling natively
     const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
+    const containerH = containerRef.current?.clientHeight ?? window.innerHeight;
     const availGridW = containerW - playerWidth - 32 - 16;
-    artSize   = Math.max(60, Math.floor((availGridW - GRID_GAP * 2) / 3));
+    const availGridH = containerH - 32;
+
+    const META_H = 65; // Approximate rendered height of title and artist wrapper below each card
+    const artFromW = Math.floor((availGridW - GRID_GAP * 2) / 3);
+    const artFromH = Math.max(40, Math.floor((availGridH - GRID_GAP * 2 - 3 * META_H) / 3));
+
+    artSize   = Math.max(40, Math.min(160, Math.min(artFromW, artFromH)));
     gridWidth  = artSize * 3 + GRID_GAP * 2;
   }
 

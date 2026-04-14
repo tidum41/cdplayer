@@ -30,10 +30,10 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
   };
 
   if (isCarousel) {
-    // 16px padding inside carousel container + half of the 140px artSize = 86px top
+    const arrowTop = 16 + artSize / 2;
     return (
       <div className={appStyles.carouselWrap}>
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} style={{ top: '86px' }} onClick={scrollLeft} aria-label="Scroll left">
+        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} style={{ top: arrowTop }} onClick={scrollLeft} aria-label="Scroll left">
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
         
@@ -51,7 +51,7 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
           ))}
         </div>
 
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} style={{ top: '86px' }} onClick={scrollRight} aria-label="Scroll right">
+        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} style={{ top: arrowTop }} onClick={scrollRight} aria-label="Scroll right">
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </div>
