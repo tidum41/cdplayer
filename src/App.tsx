@@ -91,20 +91,58 @@ export default function App() {
       document.body.style.cursor = 'none';
     }
 
+    // Simulates pointer capture: track which element received pointerdown so
+    // subsequent pointermove/up are also sent there even when the cursor has moved away.
+    let capturedTarget: Element | null = null;
+
     function handleMessage(e: MessageEvent) {
       const { type, x, y } = (e.data ?? {}) as { type?: string; x?: number; y?: number };
       if (typeof type !== 'string' || !type.startsWith('framer-') || x == null || y == null) return;
       const target = document.elementFromPoint(x, y);
       if (!target) return;
-      const init: PointerEventInit = { bubbles: true, cancelable: true, clientX: x, clientY: y, pointerId: 1 };
+
+      // isPrimary: true  — dnd-kit's PointerSensor ignores events where isPrimary is false.
+      // pointerType: 'mouse' — PointerSensor handles this on all platforms (desktop & mobile).
+      // buttons: 1  — primary button held; required for dnd-kit to recognise active drag moves.
+      const held = type === 'framer-pointerdown' || type === 'framer-pointermove';
+      const init: PointerEventInit = {
+        bubbles: true,
+        cancelable: true,
+        clientX: x,
+        clientY: y,
+        pointerId: 1,
+        isPrimary: true,
+        pointerType: 'mouse',
+        buttons: held ? 1 : 0,
+      };
+
       switch (type) {
-        case 'framer-pointerdown': target.dispatchEvent(new PointerEvent('pointerdown', init)); break;
-        case 'framer-pointermove': target.dispatchEvent(new PointerEvent('pointermove', init)); break;
-        case 'framer-pointerup':   target.dispatchEvent(new PointerEvent('pointerup',   init)); break;
-        case 'framer-click':
+        case 'framer-pointerdown':
+          capturedTarget = target;
           target.dispatchEvent(new PointerEvent('pointerdown', init));
-          target.dispatchEvent(new PointerEvent('pointerup',   init));
-          target.dispatchEvent(new MouseEvent('click', init)); break;
+          break;
+        case 'framer-pointermove':
+          target.dispatchEvent(new PointerEvent('pointermove', init));
+          // Simulate pointer capture: also deliver to the original pressed element
+          // so disc scratch / eject-drag keep working after the cursor leaves the disc.
+          if (capturedTarget && capturedTarget !== target) {
+            capturedTarget.dispatchEvent(new PointerEvent('pointermove', init));
+          }
+          break;
+        case 'framer-pointerup':
+          target.dispatchEvent(new PointerEvent('pointerup', init));
+          if (capturedTarget && capturedTarget !== target) {
+            capturedTarget.dispatchEvent(new PointerEvent('pointerup', init));
+          }
+          capturedTarget = null;
+          break;
+        case 'framer-click':
+          // pointerdown/up were already forwarded; just fire the click so React
+          // onClick handlers (buttons, album taps) trigger.
+          target.dispatchEvent(new MouseEvent('click', {
+            bubbles: true, cancelable: true, clientX: x, clientY: y,
+          }));
+          break;
       }
     }
     window.addEventListener('message', handleMessage);

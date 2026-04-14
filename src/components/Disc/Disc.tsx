@@ -93,7 +93,13 @@ export function Disc({
     lastScratchAngleRef.current = getAngleFromCenter(e.clientX, e.clientY, rect);
     lastScratchTimeRef.current = e.timeStamp;
     scratchVelRef.current = 0;
-    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    try {
+      // Throws for synthetic pointer IDs (e.g. Framer embed postMessage events).
+      // Capture is simulated via capturedTarget tracking in the message handler instead.
+      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    } catch {
+      // no-op — scratch still works via manual capture simulation
+    }
   }, [showArcs]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
