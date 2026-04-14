@@ -59,8 +59,9 @@
   background-color: #A01515;
 }
 
-/* Tactile press */
-.btn:active:not(:disabled) {
+/* Tactile press — driven by React onPointerDown/Up state (works for both real
+   and synthetic events; CSS :active is skipped by browsers for dispatchEvent) */
+.btnPressed:not(:disabled) {
   transform: translateY(7px);
   background-color: #959595;
   box-shadow:

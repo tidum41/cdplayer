@@ -1,67 +1,87 @@
-// MusicPlayerEmbed.tsx — Add to your Framer project as a code component.
+import { useRef } from "react"
+import { addPropertyControls, ControlType } from "framer"
+
+// Update this to your deployed Vercel URL
+const EMBED_URL = "https://cdplayer-peach.vercel.app/"
+
+interface Props {
+    height?: number
+    style?: React.CSSProperties
+}
+
+// MusicPlayerEmbed — Framer code component
 //
 // How it works:
 //   • The iframe has pointerEvents:none so mouse events stay in Framer's DOM
 //     → Framer's custom JS cursor keeps tracking position over the embed.
-//   • A transparent overlay div captures all real pointer events and forwards
+//   • A transparent overlay captures all pointer + click events and forwards
 //     them into the iframe via postMessage with iframe-relative coordinates.
-//   • The app inside the iframe listens for these messages and dispatches
-//     synthetic PointerEvents so dnd-kit / scratch interactions still work.
-//
-// Setup:
-//   1. Change EMBED_URL to your deployed Vercel URL.
-//   2. In Framer, add this file as a code component.
-//   3. Replace the existing URL embed frame with this component.
-//   4. Size it: Desktop fill 1fr height / Tablet 700px / Mobile 550px.
+//   • allow="autoplay" lets the iframe inherit the parent page's user gesture
+//     so AudioContext + audio.play() work without needing a direct iframe click.
 
-import { useRef } from "react"
-import { addPropertyControls } from "framer"
+export default function MusicPlayerEmbed({ height = 550, style }: Props) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const iframeRef = useRef<HTMLIFrameElement>(null)
 
-const EMBED_URL = "https://YOUR-VERCEL-URL/"
+    function forward(e: { clientX: number; clientY: number }, type: string) {
+        const rect = containerRef.current?.getBoundingClientRect()
+        if (!rect || !iframeRef.current?.contentWindow) return
+        iframeRef.current.contentWindow.postMessage(
+            { type, x: e.clientX - rect.left, y: e.clientY - rect.top },
+            "*"
+        )
+    }
 
-interface Props {
-  style?: React.CSSProperties
-}
+    const styleH = style?.height
+    const resolvedHeight =
+        styleH && styleH !== "fit-content" && styleH !== "auto"
+            ? styleH
+            : height
 
-export default function MusicPlayerEmbed({ style }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-
-  function forward(e: React.PointerEvent, type: string) {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect || !iframeRef.current?.contentWindow) return
-    iframeRef.current.contentWindow.postMessage(
-      { type, x: e.clientX - rect.left, y: e.clientY - rect.top },
-      "*"
+    return (
+        <div
+            ref={containerRef}
+            style={{
+                ...style,
+                width: "100%",
+                height: resolvedHeight,
+                position: "relative",
+                overflow: "hidden",
+            }}
+        >
+            <iframe
+                ref={iframeRef}
+                src={EMBED_URL}
+                allow="autoplay"
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                    pointerEvents: "none",
+                }}
+            />
+            {/* Transparent overlay: captures real pointer/click events, forwards to iframe */}
+            <div
+                onPointerDown={(e) => forward(e, "framer-pointerdown")}
+                onPointerMove={(e) => forward(e, "framer-pointermove")}
+                onPointerUp={(e) => forward(e, "framer-pointerup")}
+                onClick={(e) => forward(e, "framer-click")}
+                style={{ position: "absolute", inset: 0 }}
+            />
+        </div>
     )
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ position: "relative", width: "100%", height: "100%", ...style }}
-    >
-      <iframe
-        ref={iframeRef}
-        src={EMBED_URL}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          border: "none",
-          pointerEvents: "none", // keeps Framer cursor tracking active
-        }}
-      />
-      {/* Transparent overlay: captures real pointer events, forwards to iframe */}
-      <div
-        onPointerDown={e => forward(e, "framer-pointerdown")}
-        onPointerMove={e => forward(e, "framer-pointermove")}
-        onPointerUp={e => forward(e, "framer-pointerup")}
-        style={{ position: "absolute", inset: 0 }}
-      />
-    </div>
-  )
 }
 
-addPropertyControls(MusicPlayerEmbed, {})
+addPropertyControls(MusicPlayerEmbed, {
+    height: {
+        type: ControlType.Number,
+        title: "Height",
+        defaultValue: 550,
+        min: 200,
+        max: 1200,
+        step: 10,
+        displayStepper: true,
+    },
+})

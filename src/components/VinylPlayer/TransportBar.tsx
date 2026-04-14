@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './TransportBar.module.css';
 
 interface TransportBarProps {
@@ -45,6 +45,9 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
   const barRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rafRef = useRef<number>(0);
   const dataRef = useRef<Uint8Array | null>(null);
+  // Track which button is pressed — CSS :active is skipped for synthetic events
+  // (dispatchEvent), so we drive the pressed style via React state instead.
+  const [pressed, setPressed] = useState<'pause' | 'play' | 'eject' | null>(null);
 
   useEffect(() => {
     const analyser = analyserRef?.current;
@@ -82,16 +85,35 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
 
   return (
     <div className={styles.bar}>
-      <button className={`${styles.btn} ${styles.btnFirst}`} onClick={onPause}>
+      <button
+        className={`${styles.btn} ${styles.btnFirst} ${pressed === 'pause' ? styles.btnPressed : ''}`}
+        onPointerDown={() => setPressed('pause')}
+        onPointerUp={() => setPressed(null)}
+        onPointerLeave={() => setPressed(null)}
+        onClick={onPause}
+      >
         <div className={styles.orangeDot} />
         <PauseIcon />
       </button>
 
-      <button className={`${styles.btn} ${styles.btnMid}`} onClick={onPlay}>
+      <button
+        className={`${styles.btn} ${styles.btnMid} ${pressed === 'play' ? styles.btnPressed : ''}`}
+        onPointerDown={() => setPressed('play')}
+        onPointerUp={() => setPressed(null)}
+        onPointerLeave={() => setPressed(null)}
+        onClick={onPlay}
+      >
         <PlayIcon />
       </button>
 
-      <button className={`${styles.btn} ${styles.btnThird}`} onClick={onEject} disabled={!hasDisc}>
+      <button
+        className={`${styles.btn} ${styles.btnThird} ${pressed === 'eject' ? styles.btnPressed : ''}`}
+        onPointerDown={() => !hasDisc ? null : setPressed('eject')}
+        onPointerUp={() => setPressed(null)}
+        onPointerLeave={() => setPressed(null)}
+        onClick={onEject}
+        disabled={!hasDisc}
+      >
         <EjectIcon />
       </button>
 
