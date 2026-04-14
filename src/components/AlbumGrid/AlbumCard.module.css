@@ -37,11 +37,10 @@
     radial-gradient(circle, transparent 53%, rgba(0,0,0,0.06) 53%, rgba(0,0,0,0.06) 55%, transparent 55%);
 }
 
-/* Dragging: disc slides out from behind the cover */
+/* Dragging: disc becomes visible; direction-transform is applied inline */
 .card.dragging .discBehind {
-  transform: translateX(34px);
-  opacity: 0.9;
-  transition: transform 0.28s ease-out, opacity 0.15s ease-out;
+  opacity: 0.88;
+  transition: transform 0.25s ease-out, opacity 0.14s ease-out;
 }
 
 .art {

@@ -39,11 +39,12 @@
 }
 
 @keyframes snapIn {
-  0% { transform: scale(1.05); }
-  45% { transform: scale(0.97); }
+  0%   { transform: scale(0.82); }
+  52%  { transform: scale(1.06); }
+  76%  { transform: scale(0.97); }
   100% { transform: scale(1); }
 }
 
 .platter.snapIn {
-  animation: snapIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: snapIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

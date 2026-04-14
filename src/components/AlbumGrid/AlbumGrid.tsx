@@ -3,6 +3,8 @@ import { Album, albums } from '../../data/albums';
 import { AlbumCard } from './AlbumCard';
 import appStyles from '../../App.module.css';
 
+type DragDir = 'left' | 'right' | 'up' | 'down' | null;
+
 interface AlbumGridProps {
   activeAlbumId: string | null;
   gridWidth?: number;
@@ -10,11 +12,12 @@ interface AlbumGridProps {
   colorMap?: Record<string, string>;
   isCarousel?: boolean;
   onAlbumTap?: (album: Album) => void;
+  dragDirection?: DragDir;
 }
 
 const GRID_GAP = 14;
 
-export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap }: AlbumGridProps) {
+export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap, dragDirection }: AlbumGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -46,6 +49,7 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
                 artSize={artSize}
                 resolvedColor={colorMap?.[album.id]}
                 onTap={onAlbumTap}
+                dragDirection={dragDirection}
               />
             </div>
           ))}

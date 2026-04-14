@@ -35,6 +35,7 @@ export default function App() {
   const colorMap = useAlbumColors(albums);
   const [scratchRate, setScratchRate] = useState(1);
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
+  const [dragDirection, setDragDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
@@ -167,21 +168,35 @@ export default function App() {
   function handleDragStart(event: DragStartEvent) {
     setDragAlbum(event.active.data.current?.album ?? null);
     setDragDiscSize(120);
+    setDragDirection(null);
     updatePlatterCenter();
   }
 
   function handleDragMove(event: DragMoveEvent) {
-    if (!platterCenterRef.current || !event.activatorEvent) return;
-    const pe = event.activatorEvent as PointerEvent;
-    const cursorX = pe.clientX + (event.delta?.x ?? 0);
-    const cursorY = pe.clientY + (event.delta?.y ?? 0);
-    const pc = platterCenterRef.current;
-    const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
-    const maxDist = 500;
-    const targetSize = PLATTER_SIZE * scale;
-    const minSize = 120;
-    const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
-    setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
+    // Grow disc toward platter as cursor approaches
+    if (platterCenterRef.current && event.activatorEvent) {
+      const pe = event.activatorEvent as PointerEvent;
+      const cursorX = pe.clientX + (event.delta?.x ?? 0);
+      const cursorY = pe.clientY + (event.delta?.y ?? 0);
+      const pc = platterCenterRef.current;
+      const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
+      const maxDist = 500;
+      const targetSize = PLATTER_SIZE * scale;
+      const minSize = 120;
+      const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
+      setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
+    }
+
+    // Track cardinal drag direction (4-way only, threshold 8px)
+    const dx = event.delta?.x ?? 0;
+    const dy = event.delta?.y ?? 0;
+    if (Math.abs(dx) >= 8 || Math.abs(dy) >= 8) {
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        setDragDirection(dx > 0 ? 'right' : 'left');
+      } else {
+        setDragDirection(dy > 0 ? 'down' : 'up');
+      }
+    }
   }
 
   const loadAlbumWithAudio = useCallback((album: Album, withAudio: boolean) => {
@@ -212,6 +227,7 @@ export default function App() {
 
     setDragAlbum(null);
     setDragDiscSize(120);
+    setDragDirection(null);
   }
 
   const handleConsentAccept = useCallback(() => {
@@ -289,17 +305,13 @@ export default function App() {
     artSize = 90;
     gridWidth = 0; // Not used in carousel mode
   } else {
-    // Horizontal: grid mathematically constrained by BOTH width and height to prevent scrolling natively
-    const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
+    // Horizontal: fixed-width grid so player + grid sit compact and centered together.
+    // Capped at 120px art so drag distance to platter stays short (UX).
     const containerH = containerRef.current?.clientHeight ?? window.innerHeight;
-    const availGridW = containerW - playerWidth - 32 - 16;
     const availGridH = containerH - 32;
-
-    const META_H = 65; // Approximate rendered height of title and artist wrapper below each card
-    const artFromW = Math.floor((availGridW - GRID_GAP * 2) / 3);
+    const META_H = 65;
     const artFromH = Math.max(40, Math.floor((availGridH - GRID_GAP * 2 - 3 * META_H) / 3));
-
-    artSize   = Math.max(40, Math.min(160, Math.min(artFromW, artFromH)));
+    artSize   = Math.max(40, Math.min(120, artFromH));
     gridWidth  = artSize * 3 + GRID_GAP * 2;
   }
 
@@ -334,6 +346,22 @@ export default function App() {
           className={`${styles.layout} ${isVertical ? styles.layoutVertical : ''}`}
           ref={containerRef}
         >
+          {/* ── Horizontal: hint floats centered between player and grid ── */}
+          {!activeAlbum && !isVertical && (
+            <div className={styles.dragHintH} aria-hidden="true">
+              <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
+                <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
+                <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+              </svg>
+              <span className={styles.dragHintTrail}>· · ·</span>
+              <svg className={styles.dragHintArrow} width="11" height="9" viewBox="0 0 11 9" fill="none">
+                <path d="M10 4.5H1M1 4.5L4.5 1M1 4.5L4.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>drag to play</span>
+            </div>
+          )}
+
           <div className={`${styles.contentBox} ${isVertical ? styles.contentBoxVertical : ''}`}>
 
             {/* CD Player */}
@@ -369,25 +397,28 @@ export default function App() {
               </div>
             </div>
 
+            {/* Vertical: hint sits between player and carousel */}
+            {!activeAlbum && isVertical && (
+              <div className={styles.dragHintV} aria-hidden="true">
+                <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
+                  <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
+                  <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+                </svg>
+                <span className={styles.dragHintTrail}>· · ·</span>
+                {/* Arrow points up in vertical mode */}
+                <svg className={styles.dragHintArrow} width="9" height="11" viewBox="0 0 9 11" fill="none">
+                  <path d="M4.5 10V1M4.5 1L1 4.5M4.5 1L8 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>drag to play</span>
+              </div>
+            )}
+
             {/* Album Grid */}
-            <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
-              {!activeAlbum && (
-                <div className={`${styles.dragHint} ${isVertical ? styles.dragHintVertical : ''}`} aria-hidden="true">
-                  {/* Disc that slides left/up, suggesting drag direction toward player */}
-                  <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="6.3" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="0.8"/>
-                    <circle cx="7" cy="7" r="3.8" stroke="currentColor" strokeWidth="0.5" fillOpacity="0"/>
-                    <circle cx="7" cy="7" r="1.4" fill="currentColor"/>
-                  </svg>
-                  {/* Dotted trail */}
-                  <span className={styles.dragHintTrail}>· · ·</span>
-                  {/* Left-pointing arrow; rotated -90° in vertical mode via CSS */}
-                  <svg className={styles.dragHintArrow} width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M9 4H1M1 4L4 1M1 4L4 7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>drag to play</span>
-                </div>
-              )}
+            <div
+              className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}
+              style={isVertical ? undefined : { width: gridWidth }}
+            >
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
                 gridWidth={isVertical ? undefined : gridWidth}
@@ -395,6 +426,7 @@ export default function App() {
                 colorMap={colorMap}
                 isCarousel={isVertical}
                 onAlbumTap={handleAlbumTap}
+                dragDirection={dragDirection}
               />
             </div>
 

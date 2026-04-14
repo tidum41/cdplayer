@@ -2,15 +2,29 @@ import { useDraggable } from '@dnd-kit/core';
 import type { Album } from '../../data/albums';
 import styles from './AlbumCard.module.css';
 
+type DragDir = 'left' | 'right' | 'up' | 'down' | null;
+
 interface AlbumCardProps {
   album: Album;
   isActive: boolean;
   artSize: number;
   resolvedColor?: string;
   onTap?: (album: Album) => void;
+  dragDirection?: DragDir;
 }
 
-export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap }: AlbumCardProps) {
+function discTransform(isDragging: boolean, dir: DragDir): string {
+  if (!isDragging) return 'translateX(0)';
+  switch (dir) {
+    case 'left':  return 'translateX(-36px)';
+    case 'right': return 'translateX(36px)';
+    case 'up':    return 'translateY(-36px)';
+    case 'down':  return 'translateY(36px)';
+    default:      return 'translateX(36px)'; // no movement yet → default right
+  }
+}
+
+export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, dragDirection }: AlbumCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: album.id,
     data: { album },
@@ -32,10 +46,13 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap }: Al
         className={styles.artWrap}
         style={{ width: artSize, height: artSize }}
       >
-        {/* Disc that peeks out from behind the cover and slides out when dragging */}
+        {/* Disc behind cover — slides in the direction the card is being dragged */}
         <div
           className={styles.discBehind}
-          style={{ backgroundColor: resolvedColor ?? album.color }}
+          style={{
+            backgroundColor: resolvedColor ?? album.color,
+            transform: discTransform(isDragging, dragDirection ?? null),
+          }}
         />
         <div
           className={styles.art}

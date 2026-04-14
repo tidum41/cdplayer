@@ -26,7 +26,7 @@ body {
 .contentBox {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;           /* tighter gap → shorter drag distance */
   justify-content: center;
   width: 100%;
   padding: 0 16px;
@@ -41,7 +41,7 @@ body {
 }
 
 .gridCol {
-  flex: 1 1 0;
+  flex: 0 0 auto;     /* fixed width — doesn't stretch to fill viewport */
   min-width: 0;
   /* Allow vertical scroll if grid taller than player */
   max-height: calc(100% - 32px);
@@ -146,51 +146,84 @@ body {
 
 /* ── Drag hint ──────────────────────────────────────────────────────────── */
 
-/* ── Drag hint ──────────────────────────────────────────────────────────── */
+/* ── Drag hint — shared base ──────────────────────────────────────────── */
 
-.dragHint {
+.dragHintH,
+.dragHintV {
   display: flex;
   align-items: center;
-  gap: 5px;
-  opacity: 0.48;
+  gap: 7px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: lowercase;
-  color: rgba(0, 0, 0, 0.72);
+  color: rgba(0, 0, 0, 0.6);
   pointer-events: none;
   user-select: none;
-  padding: 0 0 12px;
-  align-self: center; /* centered above the grid */
 }
 
-/* Disc slides LEFT (toward player), pauses, returns */
-.dragHintDisc {
+/* ── Horizontal: absolute centered between the two columns ─────────────── */
+
+.dragHintH {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+/* ── Vertical: in-flow between player and grid ─────────────────────────── */
+
+.dragHintV {
+  align-self: center;
+  padding: 8px 0;
+  flex-direction: row;
   flex-shrink: 0;
-  animation: dragHintSlide 2.6s ease-in-out infinite;
 }
 
-@keyframes dragHintSlide {
+/* ── Shared animated children ─────────────────────────────────────────── */
+
+/* Disc slides LEFT in horizontal */
+.dragHintH .dragHintDisc {
+  flex-shrink: 0;
+  animation: dragHintSlideLeft 2.6s ease-in-out infinite;
+}
+
+@keyframes dragHintSlideLeft {
   0%   { transform: translateX(0px) scale(1); }
-  45%  { transform: translateX(-7px) scale(1.12); }
-  55%  { transform: translateX(-7px) scale(1.12); }
+  45%  { transform: translateX(-8px) scale(1.14); }
+  55%  { transform: translateX(-8px) scale(1.14); }
   100% { transform: translateX(0px) scale(1); }
+}
+
+/* Disc slides UP in vertical */
+.dragHintV .dragHintDisc {
+  flex-shrink: 0;
+  animation: dragHintSlideUp 2.6s ease-in-out infinite;
+}
+
+@keyframes dragHintSlideUp {
+  0%   { transform: translateY(0px) scale(1); }
+  45%  { transform: translateY(-8px) scale(1.14); }
+  55%  { transform: translateY(-8px) scale(1.14); }
+  100% { transform: translateY(0px) scale(1); }
 }
 
 /* Trail dots pulse in sync */
 .dragHintTrail {
-  letter-spacing: 0.14em;
+  letter-spacing: 0.15em;
   font-size: 9px;
-  margin: 0 -1px;
+  margin: 0 -2px;
   animation: dragHintTrailFade 2.6s ease-in-out infinite;
 }
 
 @keyframes dragHintTrailFade {
-  0%   { opacity: 0.25; }
-  45%  { opacity: 0.65; }
-  55%  { opacity: 0.65; }
-  100% { opacity: 0.25; }
+  0%   { opacity: 0.2; }
+  45%  { opacity: 0.6; }
+  55%  { opacity: 0.6; }
+  100% { opacity: 0.2; }
 }
 
 /* Arrow brightens as disc slides toward player */
@@ -200,26 +233,8 @@ body {
 }
 
 @keyframes dragHintArrowFade {
-  0%   { opacity: 0.35; }
-  45%  { opacity: 1; }
-  55%  { opacity: 1; }
-  100% { opacity: 0.35; }
-}
-
-/* ── Vertical variant: disc slides UP, arrow rotates to point up ──────── */
-
-.dragHintVertical .dragHintDisc {
-  animation: dragHintSlideUp 2.6s ease-in-out infinite;
-}
-
-@keyframes dragHintSlideUp {
-  0%   { transform: translateY(0px) scale(1); }
-  45%  { transform: translateY(-7px) scale(1.12); }
-  55%  { transform: translateY(-7px) scale(1.12); }
-  100% { transform: translateY(0px) scale(1); }
-}
-
-/* Rotate the left-arrow SVG 90° counter-clockwise to point up */
-.dragHintVertical .dragHintArrow {
-  transform: rotate(90deg);
+  0%   { opacity: 0.3; }
+  45%  { opacity: 0.85; }
+  55%  { opacity: 0.85; }
+  100% { opacity: 0.3; }
 }
