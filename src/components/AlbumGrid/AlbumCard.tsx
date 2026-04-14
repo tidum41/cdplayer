@@ -7,13 +7,18 @@ interface AlbumCardProps {
   isActive: boolean;
   artSize: number;
   resolvedColor?: string;
+  onTap?: (album: Album) => void;
 }
 
-export function AlbumCard({ album, isActive, artSize, resolvedColor }: AlbumCardProps) {
+export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap }: AlbumCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: album.id,
     data: { album },
   });
+
+  const handleClick = () => {
+    onTap?.(album);
+  };
 
   return (
     <div
@@ -21,6 +26,7 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor }: AlbumCard
       className={`${styles.card} ${isDragging ? styles.dragging : ''} ${isActive ? styles.active : ''}`}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
     >
       <div
         className={styles.artWrap}

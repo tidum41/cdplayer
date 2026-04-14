@@ -3,6 +3,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -23,7 +24,7 @@ import styles from './App.module.css';
 const PLAYER_W = 893;
 const PLAYER_H = 1321;
 const PLATTER_SIZE = 835;
-const MOBILE_BREAKPOINT = 500; // px — below this, switch to vertical layout
+const MOBILE_BREAKPOINT = 850; // Switches to vertical layout sooner (like iPad portrait)
 
 // Target rendered player width — player stays this size unless viewport is too small
 const TARGET_PLAYER_W_PX = 370;
@@ -56,9 +57,9 @@ export default function App() {
     setIsVertical(vertical);
 
     if (vertical) {
-      // Vertical: player width 90% of container, height constraint relaxed to 55%
-      const availW = W * 0.90;
-      const availH = H * 0.55;
+      // Vertical: player width 95% of container, height constraint completely relaxed (80%) to maximize player
+      const availW = W * 0.95;
+      const availH = H * 0.80;
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
       setScale(Math.max(0.14, s));
     } else {
@@ -93,7 +94,8 @@ export default function App() {
   }, [scale]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -161,6 +163,15 @@ export default function App() {
     pendingAlbumRef.current = null;
     if (album) loadAlbumWithAudio(album, false);
   }, [loadAlbumWithAudio]);
+
+  const handleAlbumTap = useCallback((album: Album) => {
+    if (audioEnabled === null) {
+      pendingAlbumRef.current = album;
+      setShowConsent(true);
+    } else {
+      loadAlbumWithAudio(album, audioEnabled);
+    }
+  }, [audioEnabled, loadAlbumWithAudio]);
 
   const handlePlay = useCallback(() => {
     if (activeAlbum) { play(); if (audioEnabled !== false) playAudio(); }
@@ -293,6 +304,7 @@ export default function App() {
                 artSize={artSize}
                 colorMap={colorMap}
                 isCarousel={isVertical}
+                onAlbumTap={handleAlbumTap}
               />
             </div>
 

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { albums } from '../../data/albums';
+import { Album, albums } from '../../data/albums';
 import { AlbumCard } from './AlbumCard';
 import appStyles from '../../App.module.css';
 
@@ -9,11 +9,12 @@ interface AlbumGridProps {
   artSize: number;
   colorMap?: Record<string, string>;
   isCarousel?: boolean;
+  onAlbumTap?: (album: Album) => void;
 }
 
 const GRID_GAP = 14;
 
-export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel }: AlbumGridProps) {
+export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap }: AlbumGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -29,9 +30,10 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
   };
 
   if (isCarousel) {
+    // 16px padding inside carousel container + half of the 140px artSize = 86px top
     return (
       <div className={appStyles.carouselWrap}>
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} onClick={scrollLeft} aria-label="Scroll left">
+        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} style={{ top: '86px' }} onClick={scrollLeft} aria-label="Scroll left">
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
         
@@ -43,12 +45,13 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
                 isActive={album.id === activeAlbumId}
                 artSize={artSize}
                 resolvedColor={colorMap?.[album.id]}
+                onTap={onAlbumTap}
               />
             </div>
           ))}
         </div>
 
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} onClick={scrollRight} aria-label="Scroll right">
+        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} style={{ top: '86px' }} onClick={scrollRight} aria-label="Scroll right">
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </div>
@@ -72,6 +75,7 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
           isActive={album.id === activeAlbumId}
           artSize={artSize}
           resolvedColor={colorMap?.[album.id]}
+          onTap={onAlbumTap}
         />
       ))}
     </div>

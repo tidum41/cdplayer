@@ -72,14 +72,14 @@ export function Disc({
 
   // ── Scratch helpers ──────────────────────────────────────────────────────
   const getAngleFromCenter = (clientX: number, clientY: number, rect: DOMRect) => {
-    const dx = clientX - (rect.left + rect.width  / 2);
-    const dy = clientY - (rect.top  + rect.height / 2);
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
     return Math.atan2(dy, dx) * (180 / Math.PI);
   };
 
   const getDistFromCenter = (clientX: number, clientY: number, rect: DOMRect) => {
-    const dx = clientX - (rect.left + rect.width  / 2);
-    const dy = clientY - (rect.top  + rect.height / 2);
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
     return Math.sqrt(dx * dx + dy * dy);
   };
 
@@ -124,7 +124,7 @@ export function Disc({
     const newAngle = getAngleFromCenter(e.clientX, e.clientY, rect);
     let delta = newAngle - lastScratchAngleRef.current;
     // Wrap-around
-    if (delta >  180) delta -= 360;
+    if (delta > 180) delta -= 360;
     if (delta < -180) delta += 360;
 
     const dt = e.timeStamp - lastScratchTimeRef.current;
