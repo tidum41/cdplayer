@@ -56,9 +56,9 @@ export default function App() {
     setIsVertical(vertical);
 
     if (vertical) {
-      // Vertical: player width 90% of container, also capped to 40% of height
+      // Vertical: player width 90% of container, height constraint relaxed to 55%
       const availW = W * 0.90;
-      const availH = H * 0.40;
+      const availH = H * 0.55;
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
       setScale(Math.max(0.14, s));
     } else {
@@ -208,12 +208,9 @@ export default function App() {
   let gridWidth: number;
 
   if (isVertical) {
-    // Vertical: grid scrolls, so artSize only depends on width.
-    // Cap at 110px so cards aren't gigantic; ≥60px so they're useable.
-    const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
-    const artFromW = Math.floor((containerW - 32 - GRID_GAP * 2) / 3);
-    artSize   = Math.max(60, Math.min(110, artFromW));
-    gridWidth  = artSize * 3 + GRID_GAP * 2;
+    // Vertical: single-row carousel, use a fixed size that looks good on mobile
+    artSize = 140; 
+    gridWidth = 0; // Not used in carousel mode
   } else {
     // Horizontal: grid height matches player height — artSize from both axes
     const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
@@ -290,27 +287,13 @@ export default function App() {
 
             {/* Album Grid */}
             <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
-              {isVertical ? (
-                // Scrollable wrapper with fade indicator for mobile
-                <>
-                  <div className={styles.gridScrollArea}>
-                    <AlbumGrid
-                      activeAlbumId={activeAlbum?.id ?? null}
-                      gridWidth={gridWidth}
-                      artSize={artSize}
-                      colorMap={colorMap}
-                    />
-                  </div>
-                  <div className={styles.gridScrollFade} />
-                </>
-              ) : (
-                <AlbumGrid
-                  activeAlbumId={activeAlbum?.id ?? null}
-                  gridWidth={gridWidth}
-                  artSize={artSize}
-                  colorMap={colorMap}
-                />
-              )}
+              <AlbumGrid
+                activeAlbumId={activeAlbum?.id ?? null}
+                gridWidth={isVertical ? undefined : gridWidth}
+                artSize={artSize}
+                colorMap={colorMap}
+                isCarousel={isVertical}
+              />
             </div>
 
           </div>

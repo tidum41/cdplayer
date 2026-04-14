@@ -52,8 +52,8 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
     if (!isPlaying || !hasDisc || !analyser) {
       cancelAnimationFrame(rafRef.current);
       // Reset bars to idle heights
-      barRefs.current.forEach((bar, i) => {
-        if (bar) bar.style.height = `${12 + i * 6}%`;
+      barRefs.current.forEach((bar) => {
+        if (bar) bar.style.height = `10%`;
       });
       return;
     }
@@ -102,7 +102,7 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
             <div
               ref={el => { barRefs.current[i] = el; }}
               className={`${styles.vizFill} ${isPlaying && !analyserRef?.current ? styles.vizActive : ''} ${i === 0 ? styles.vizFill1 : i === 1 ? styles.vizFill2 : ''}`}
-              style={{ height: `${12 + i * 6}%` }}
+              style={{ height: `10%` }}
             />
           </div>
         ))}
