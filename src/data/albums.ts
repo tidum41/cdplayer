@@ -8,9 +8,16 @@ export interface Album {
   id: string;
   title: string;
   artist: string;
+  /** Fallback disc color if artUrl is absent or extraction fails */
   color: string;
   artUrl?: string;
   audioUrl?: string;
+  /**
+   * Pin this album's disc to a specific color, bypassing auto-extraction.
+   * Set to any valid CSS hex/rgb color to override.
+   * Example: colorOverride: '#E05070'
+   */
+  colorOverride?: string;
 }
 
 export const albums: Album[] = [

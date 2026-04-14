@@ -65,6 +65,40 @@
   line-height: 1;
 }
 
+/* Scratch state: icon + time + rate */
+.scratchBlock {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.15s ease-out;
+}
+
+.scratchInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scratchTime {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 26px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.scratchRate {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.50);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
 .line2Row {
   display: flex;
   align-items: baseline;

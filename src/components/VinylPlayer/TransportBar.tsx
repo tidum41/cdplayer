@@ -49,7 +49,7 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
   useEffect(() => {
     const analyser = analyserRef?.current;
 
-    if (!isPlaying || !analyser) {
+    if (!isPlaying || !hasDisc || !analyser) {
       cancelAnimationFrame(rafRef.current);
       // Reset bars to idle heights
       barRefs.current.forEach((bar, i) => {
@@ -68,8 +68,6 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         if (!bar) return;
         const bin = FREQ_BINS[i] ?? 4;
         const raw = dataRef.current![bin] ?? 0;
-        // Power-curve amplification: quiet signals still show movement,
-        // loud signals hit the top dramatically
         const normalized = raw / 255;
         const amplified = Math.pow(normalized, 0.55) * 1.15;
         const pct = 6 + Math.min(amplified, 1) * 90;
@@ -80,7 +78,7 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
 
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying, analyserRef]);
+  }, [isPlaying, hasDisc, analyserRef]);
 
   return (
     <div className={styles.bar}>

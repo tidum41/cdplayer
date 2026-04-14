@@ -111,10 +111,17 @@ export function useAudio() {
     if (!audio) return;
     if (degPerMs === 0) {
       audio.playbackRate = 1.0;
+      audio.play().catch(() => {});
     } else {
       const normalDegPerMs = 360 / (16 * 1000);
       const rate = degPerMs / normalDegPerMs;
-      audio.playbackRate = Math.max(0.05, Math.min(3.5, rate));
+      if (rate < 0) {
+        // browsers can't reverse audio — pause while timestamp rewinds visually
+        audio.pause();
+      } else {
+        if (audio.paused) audio.play().catch(() => {});
+        audio.playbackRate = Math.max(0.05, Math.min(3.5, rate));
+      }
     }
   }, []);
 

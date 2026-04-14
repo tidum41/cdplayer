@@ -7,6 +7,8 @@ interface DiscProps {
   showArcs?: boolean;
   onEject?: () => void;
   onScratch?: (degPerMs: number) => void;
+  onEjectDragMove?: (clientX: number, clientY: number) => void;
+  onEjectDragCancel?: () => void;
 }
 
 // Slightly slower — 16-second revolution at 60fps
@@ -20,6 +22,8 @@ export function Disc({
   showArcs = false,
   onEject,
   onScratch,
+  onEjectDragMove,
+  onEjectDragCancel,
 }: DiscProps) {
   const cx = size / 2;
   const cy = size / 2;
@@ -34,6 +38,7 @@ export function Disc({
 
   // Scratch refs
   const isScratchingRef = useRef(false);
+  const isOutsideRef = useRef(false); // true when pointer has left the platter zone
   const lastScratchAngleRef = useRef(0);
   const lastScratchTimeRef = useRef(0);
   const scratchVelRef = useRef(0); // deg/ms during scratch
@@ -84,6 +89,7 @@ export function Disc({
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
     isScratchingRef.current = true;
+    isOutsideRef.current = false;
     lastScratchAngleRef.current = getAngleFromCenter(e.clientX, e.clientY, rect);
     lastScratchTimeRef.current = e.timeStamp;
     scratchVelRef.current = 0;
@@ -94,15 +100,25 @@ export function Disc({
     if (!isScratchingRef.current) return;
     const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
 
-    // Drag far enough outside platter → eject
     const dist = getDistFromCenter(e.clientX, e.clientY, rect);
-    if (dist > rect.width / 2 * 1.2) {
-      isScratchingRef.current = false;
-      try { (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId); } catch {}
-      speedRef.current = 0;
-      onScratch?.(0);
-      onEject?.();
-      return;
+    const edgeThreshold = rect.width / 2 * 1.15;
+
+    if (dist > edgeThreshold) {
+      // Pointer is outside platter — enter eject-drag mode
+      if (!isOutsideRef.current) {
+        isOutsideRef.current = true;
+        speedRef.current = 0;
+        onScratch?.(0);
+      }
+      // Track pointer for the visual disc ghost
+      onEjectDragMove?.(e.clientX, e.clientY);
+      return; // skip rotational scratch
+    }
+
+    // Pointer returned inside the platter — cancel eject-drag
+    if (isOutsideRef.current) {
+      isOutsideRef.current = false;
+      onEjectDragCancel?.();
     }
 
     const newAngle = getAngleFromCenter(e.clientX, e.clientY, rect);
@@ -113,7 +129,6 @@ export function Disc({
 
     const dt = e.timeStamp - lastScratchTimeRef.current;
     if (dt > 0) {
-      // Smooth velocity with EMA
       const raw = delta / dt;
       scratchVelRef.current = scratchVelRef.current * 0.5 + raw * 0.5;
     }
@@ -123,17 +138,26 @@ export function Disc({
     lastScratchTimeRef.current = e.timeStamp;
 
     onScratch?.(scratchVelRef.current);
-  }, [onEject, onScratch]);
+  }, [onScratch, onEjectDragMove, onEjectDragCancel]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isScratchingRef.current) return;
     isScratchingRef.current = false;
-    // Convert deg/ms → deg/frame (≈16.67ms at 60fps) and hand off to physics
-    const frameVel = scratchVelRef.current * 16.67;
-    speedRef.current = Math.max(-TARGET_DEG_PER_FRAME * 6, Math.min(TARGET_DEG_PER_FRAME * 6, frameVel));
-    onScratch?.(0);
-    void e; // suppress unused warning
-  }, [onScratch]);
+
+    if (isOutsideRef.current) {
+      // Commit the eject on pointer release
+      isOutsideRef.current = false;
+      onEjectDragCancel?.();
+      onScratch?.(0);
+      onEject?.();
+    } else {
+      // Normal release — hand scratch velocity to physics
+      const frameVel = scratchVelRef.current * 16.67;
+      speedRef.current = Math.max(-TARGET_DEG_PER_FRAME * 6, Math.min(TARGET_DEG_PER_FRAME * 6, frameVel));
+      onScratch?.(0);
+    }
+    void e;
+  }, [onScratch, onEject, onEjectDragCancel]);
 
   // ── Arc geometry ─────────────────────────────────────────────────────────
   const arcs: Array<{ d: string; strokeW: number }> = [];
@@ -179,7 +203,7 @@ export function Disc({
           className={styles.arcs}
           viewBox={`0 0 ${size} ${size}`}
           xmlns="http://www.w3.org/2000/svg"
-          style={{ pointerEvents: 'none' }} // wrapper handles all events
+          style={{ pointerEvents: 'none' }}
         >
           {arcs.map((arc, i) => (
             <path

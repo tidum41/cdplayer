@@ -6,9 +6,10 @@ interface AlbumCardProps {
   album: Album;
   isActive: boolean;
   artSize: number;
+  resolvedColor?: string;
 }
 
-export function AlbumCard({ album, isActive, artSize }: AlbumCardProps) {
+export function AlbumCard({ album, isActive, artSize, resolvedColor }: AlbumCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: album.id,
     data: { album },
@@ -28,12 +29,12 @@ export function AlbumCard({ album, isActive, artSize }: AlbumCardProps) {
         <div
           className={styles.art}
           style={{
-            backgroundColor: album.color,
+            backgroundColor: resolvedColor ?? album.color,
             backgroundImage: album.artUrl ? `url(${album.artUrl})` : undefined,
           }}
         />
       </div>
-      <div className={styles.meta} style={{ width: artSize, maxWidth: artSize }}>
+      <div className={styles.meta}>
         <span className={styles.title}>{album.title}</span>
         <span className={styles.artist}>{album.artist}</span>
       </div>

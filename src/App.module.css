@@ -27,6 +27,9 @@ body {
   display: flex;
   align-items: center;
   gap: 32px;
+  justify-content: center;
+  width: 100%;
+  padding: 0 16px;
 }
 
 .playerCol {
@@ -38,49 +41,80 @@ body {
 }
 
 .gridCol {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
+  /* Allow vertical scroll if grid taller than player */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   position: relative;
+  /* hide native scrollbar — scroll still works */
+  scrollbar-width: none;
 }
+.gridCol::-webkit-scrollbar { display: none; }
 
 /* ── Mobile / Vertical layout (<500px width) ──────────────────────────── */
 
 .layoutVertical {
-  align-items: flex-start;
-  justify-content: flex-start;
+  display: flex;
   flex-direction: column;
-  overflow: hidden;
-  /* no min-height override — fits in iframe */
+  align-items: center;       /* center children horizontally */
+  justify-content: flex-start;
+  width: 100%;
+  overflow: visible;
+  min-height: unset;
 }
 
 .contentBoxVertical {
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 0;
   width: 100%;
-  height: 100%;
-  padding-top: 12px;
+  padding: 12px 0 0;
 }
 
 .playerColVertical {
   flex: 0 0 auto;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
 }
 
+/* Scrollable grid area — full width, scroll vertically, fade bottom */
 .gridColVertical {
   flex: 0 0 auto;
   width: 100%;
-  overflow: hidden;
-  /* Hide webkit scrollbar on the strip */
+  display: flex;
+  flex-direction: column;
+  align-items: center;       /* horizontally centers the inner AlbumGrid */
+  padding: 12px 16px 0;
+  position: relative;
 }
 
-/* Hide scrollbar inside strip (webkit) */
-.gridColVertical ::-webkit-scrollbar {
-  display: none;
+/* Scroll container that wraps AlbumGrid in vertical mode */
+.gridScrollArea {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  max-height: 60vh;          /* limit height, enable scroll */
+  padding-bottom: 32px;      /* room for fade indicator */
+  scrollbar-width: none;
+}
+.gridScrollArea::-webkit-scrollbar { display: none; }
+
+/* Gradient fade at bottom — minimal scroll indicator */
+.gridScrollFade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, #E0E0E0);
+  pointer-events: none;
 }

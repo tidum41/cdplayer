@@ -9,9 +9,11 @@ interface PlatterProps {
   snapAnim: boolean;
   onEject?: () => void;
   onScratch?: (degPerMs: number) => void;
+  onEjectDragMove?: (clientX: number, clientY: number) => void;
+  onEjectDragCancel?: () => void;
 }
 
-export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch }: PlatterProps) {
+export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch, onEjectDragMove, onEjectDragCancel }: PlatterProps) {
   const { setNodeRef, isOver } = useDroppable({ id: 'platter' });
 
   return (
@@ -25,6 +27,8 @@ export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch }
         showArcs={!!activeAlbum}
         onEject={onEject}
         onScratch={onScratch}
+        onEjectDragMove={onEjectDragMove}
+        onEjectDragCancel={onEjectDragCancel}
       />
     </div>
   );

@@ -15,6 +15,8 @@ import { DragDisc } from './components/Disc/DragDisc';
 import { AudioConsent } from './components/AudioConsent/AudioConsent';
 import { usePlayerState } from './hooks/usePlayerState';
 import { useAudio } from './hooks/useAudio';
+import { useAlbumColors } from './hooks/useAlbumColors';
+import { albums } from './data/albums';
 import type { Album } from './data/albums';
 import styles from './App.module.css';
 
@@ -23,9 +25,14 @@ const PLAYER_H = 1321;
 const PLATTER_SIZE = 835;
 const MOBILE_BREAKPOINT = 500; // px — below this, switch to vertical layout
 
+// Target rendered player width — player stays this size unless viewport is too small
+const TARGET_PLAYER_W_PX = 370;
+
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
   const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio } = useAudio();
+  const colorMap = useAlbumColors(albums);
+  const [scratchRate, setScratchRate] = useState(1);
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +41,7 @@ export default function App() {
   const [isVertical, setIsVertical] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
   const [showConsent, setShowConsent] = useState(false);
+  const [ejectDragPos, setEjectDragPos] = useState<{ x: number; y: number } | null>(null);
   const pendingAlbumRef = useRef<Album | null>(null);
 
   const platterCenterRef = useRef<{ x: number; y: number } | null>(null);
@@ -48,16 +56,17 @@ export default function App() {
     setIsVertical(vertical);
 
     if (vertical) {
-      // Vertical: player fills ~92% of width, capped at 58% of height (optimised for 600px embeds)
-      const availW = W * 0.92;
-      const availH = H * 0.58;
+      // Vertical: player width 90% of container, also capped to 40% of height
+      const availW = W * 0.90;
+      const availH = H * 0.40;
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
       setScale(Math.max(0.14, s));
     } else {
-      // Horizontal: player gets ~30% of width, 90% of height
-      const availW = W * 0.30;
-      const availH = H * 0.90;
-      const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
+      // Horizontal: prefer a fixed ~370px player width; only shrink for tight viewports
+      const targetScale = TARGET_PLAYER_W_PX / PLAYER_W;
+      const maxFromW = (W * 0.50) / PLAYER_W; // never exceed 50% of viewport width
+      const maxFromH = (H * 0.94) / PLAYER_H;
+      const s = Math.min(targetScale, maxFromW, maxFromH);
       setScale(Math.max(0.2, s));
     }
   }, []);
@@ -162,27 +171,72 @@ export default function App() {
   }, [pause, pauseAudio, audioEnabled]);
 
   const handleEject = useCallback(() => {
-    eject(); if (audioEnabled !== false) stopAudio();
+    eject();
+    setDragAlbum(null);
+    setEjectDragPos(null);
+    setScratchRate(1);
+    if (audioEnabled !== false) stopAudio();
   }, [eject, stopAudio, audioEnabled]);
 
   const handleScratch = useCallback((degPerMs: number) => {
     if (audioEnabled !== false) scratchAudio(degPerMs);
+    if (degPerMs === 0) {
+      setScratchRate(1);
+    } else {
+      const normalDegPerMs = 360 / (16 * 1000);
+      const rate = degPerMs / normalDegPerMs;
+      // Allow full signed range — negative = counter-clockwise = rewind
+      setScratchRate(Math.max(-3.5, Math.min(3.5, rate)));
+    }
   }, [audioEnabled, scratchAudio]);
 
+  const handleEjectDragMove = useCallback((x: number, y: number) => {
+    setEjectDragPos({ x, y });
+  }, []);
+
+  const handleEjectDragCancel = useCallback(() => {
+    setEjectDragPos(null);
+  }, []);
+
   // ── Layout math ────────────────────────────────────────────────────────────
+  const playerWidth  = PLAYER_W * scale;
   const playerHeight = PLAYER_H * scale;
 
-  // Desktop: 3-column grid sized to match player height
   const GRID_GAP = 14;
-  const META_H = 30;
-  const desktopArtSize = Math.max(60, Math.floor((playerHeight - 24 - GRID_GAP * 2) / 3 - META_H));
 
-  // Mobile: horizontal strip with fixed art size
-  const MOBILE_ART = 82;
+  let artSize: number;
+  let gridWidth: number;
 
-  const artSize  = isVertical ? MOBILE_ART : desktopArtSize;
-  const gridMode = isVertical ? 'strip' : 'grid';
-  const gridHeight = isVertical ? MOBILE_ART + META_H + 8 : playerHeight - 24;
+  if (isVertical) {
+    // Vertical: grid scrolls, so artSize only depends on width.
+    // Cap at 110px so cards aren't gigantic; ≥60px so they're useable.
+    const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
+    const artFromW = Math.floor((containerW - 32 - GRID_GAP * 2) / 3);
+    artSize   = Math.max(60, Math.min(110, artFromW));
+    gridWidth  = artSize * 3 + GRID_GAP * 2;
+  } else {
+    // Horizontal: grid height matches player height — artSize from both axes
+    const containerW = containerRef.current?.clientWidth ?? window.innerWidth;
+    const availGridW = containerW - playerWidth - 32 - 16;
+    artSize   = Math.max(60, Math.floor((availGridW - GRID_GAP * 2) / 3));
+    gridWidth  = artSize * 3 + GRID_GAP * 2;
+  }
+
+  // ── Eject drag disc size ──────────────────────────────────────────────────
+  let ejectDiscSize = 0;
+  if (ejectDragPos && platterCenterRef.current && activeAlbum) {
+    const pc = platterCenterRef.current;
+    const dx = ejectDragPos.x - pc.x;
+    const dy = ejectDragPos.y - pc.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const platterRadius = (PLATTER_SIZE * scale) / 2;
+    const distFromEdge = Math.max(0, dist - platterRadius);
+    const maxDist = 280;
+    const t = Math.min(1, distFromEdge / maxDist);
+    const maxSize = PLATTER_SIZE * scale * 0.70;
+    const minSize = artSize;
+    ejectDiscSize = Math.round(maxSize * (1 - t) + minSize * t);
+  }
 
   return (
     <>
@@ -205,7 +259,7 @@ export default function App() {
             <div className={`${styles.playerCol} ${isVertical ? styles.playerColVertical : ''}`}>
               <div
                 data-player-sizer
-                style={{ width: PLAYER_W * scale, height: playerHeight, flexShrink: 0 }}
+                style={{ width: playerWidth, height: playerHeight, flexShrink: 0 }}
               >
                 <div style={{
                   width: PLAYER_W,
@@ -226,19 +280,37 @@ export default function App() {
                     volume={volume}
                     analyserRef={analyserRef}
                     onScratch={handleScratch}
+                    scratchRate={scratchRate}
+                    onEjectDragMove={handleEjectDragMove}
+                    onEjectDragCancel={handleEjectDragCancel}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Album Grid / Strip */}
+            {/* Album Grid */}
             <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
-              <AlbumGrid
-                activeAlbumId={activeAlbum?.id ?? null}
-                gridHeight={gridHeight}
-                artSize={artSize}
-                mode={gridMode}
-              />
+              {isVertical ? (
+                // Scrollable wrapper with fade indicator for mobile
+                <>
+                  <div className={styles.gridScrollArea}>
+                    <AlbumGrid
+                      activeAlbumId={activeAlbum?.id ?? null}
+                      gridWidth={gridWidth}
+                      artSize={artSize}
+                      colorMap={colorMap}
+                    />
+                  </div>
+                  <div className={styles.gridScrollFade} />
+                </>
+              ) : (
+                <AlbumGrid
+                  activeAlbumId={activeAlbum?.id ?? null}
+                  gridWidth={gridWidth}
+                  artSize={artSize}
+                  colorMap={colorMap}
+                />
+              )}
             </div>
 
           </div>
@@ -251,11 +323,28 @@ export default function App() {
               height: dragDiscSize,
               transition: 'width 0.15s ease-out, height 0.15s ease-out',
             }}>
-              <DragDisc size={dragDiscSize} color={dragAlbum.color} />
+              <DragDisc size={dragDiscSize} color={colorMap[dragAlbum.id] ?? dragAlbum.color} />
             </div>
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Eject drag ghost — fixed-position disc that appears when dragging disc off platter */}
+      {ejectDragPos && activeAlbum && ejectDiscSize > 0 && (
+        <div style={{
+          position: 'fixed',
+          left: ejectDragPos.x,
+          top: ejectDragPos.y,
+          width: ejectDiscSize,
+          height: ejectDiscSize,
+          transform: 'translate(-50%, -50%)',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          transition: 'width 0.05s linear, height 0.05s linear',
+        }}>
+          <DragDisc size={ejectDiscSize} color={colorMap[activeAlbum.id] ?? activeAlbum.color} />
+        </div>
+      )}
     </>
   );
 }

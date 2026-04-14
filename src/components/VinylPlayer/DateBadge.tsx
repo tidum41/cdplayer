@@ -18,11 +18,29 @@ function RetroSpeakerIcon() {
   );
 }
 
+/** Needle/scratch icon */
+function ScratchIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden>
+      {/* Disc outline */}
+      <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" />
+      {/* Inner hub */}
+      <circle cx="12" cy="12" r="2.5" fill="rgba(255,255,255,0.70)" />
+      {/* Needle arm */}
+      <line x1="18" y1="3" x2="13" y2="10" stroke="rgba(255,255,255,0.90)" strokeWidth="2" strokeLinecap="round" />
+      {/* Needle tip dot */}
+      <circle cx="13" cy="10" r="1.2" fill="rgba(255,255,255,0.90)" />
+    </svg>
+  );
+}
+
 interface DateBadgeProps {
   activeAlbum: Album | null;
   isPlaying: boolean;
   isLoading: boolean;
   volume?: number;
+  /** Current audio playback rate: 1 = normal, >1 fast-forward, <0 rewind */
+  scratchRate?: number;
 }
 
 function formatDate(d: Date) {
@@ -33,7 +51,15 @@ function formatDate(d: Date) {
   return { day, date: `${mm}.${dd}.${yy}` };
 }
 
-export function DateBadge({ activeAlbum, isPlaying, isLoading, volume = 0.7 }: DateBadgeProps) {
+function formatElapsed(secs: number) {
+  const neg = secs < 0;
+  const s = Math.abs(Math.round(secs));
+  const mins = String(Math.floor(s / 60)).padStart(2, '0');
+  const rem  = String(s % 60).padStart(2, '0');
+  return `${neg ? '-' : ''}${mins}:${rem}`;
+}
+
+export function DateBadge({ activeAlbum, isPlaying, isLoading, volume = 0.7, scratchRate = 1 }: DateBadgeProps) {
   const [now, setNow] = useState(new Date());
   const [elapsed, setElapsed] = useState(0);
   const [showSong, setShowSong] = useState(false);
@@ -42,30 +68,62 @@ export function DateBadge({ activeAlbum, isPlaying, isLoading, volume = 0.7 }: D
   const prevVolume = useRef(volume);
   const volumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Use a ref for elapsed so the RAF callback always sees the latest value
+  const elapsedRef = useRef(0);
+  const lastTickRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
+  // Reset elapsed when album changes
   useEffect(() => {
     if (activeAlbum?.id !== prevAlbumId.current) {
+      elapsedRef.current = 0;
       setElapsed(0);
       prevAlbumId.current = activeAlbum?.id ?? null;
     }
   }, [activeAlbum]);
 
+  // RAF-driven elapsed ticker — rate mirrors audio playback rate when scratching
   useEffect(() => {
-    if (!isPlaying) return;
-    const id = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(id);
-  }, [isPlaying]);
+    const isScratching = scratchRate !== 1;
+    const shouldTick = isPlaying || isScratching;
+
+    if (!shouldTick) {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+        lastTickRef.current = null;
+      }
+      return;
+    }
+
+    const tick = (now: number) => {
+      if (lastTickRef.current !== null) {
+        const dt = (now - lastTickRef.current) / 1000; // seconds
+        elapsedRef.current = elapsedRef.current + dt * scratchRate;
+        setElapsed(elapsedRef.current);
+      }
+      lastTickRef.current = now;
+      rafIdRef.current = requestAnimationFrame(tick);
+    };
+
+    rafIdRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+      lastTickRef.current = null;
+    };
+  }, [isPlaying, scratchRate]);
 
   useEffect(() => {
     if (!activeAlbum) {
       setShowSong(false);
       return;
     }
-    const id = setInterval(() => setShowSong(s => !s), 4000);
+    const id = setInterval(() => setShowSong(s => !s), 7000);
     return () => clearInterval(id);
   }, [activeAlbum]);
 
@@ -80,10 +138,10 @@ export function DateBadge({ activeAlbum, isPlaying, isLoading, volume = 0.7 }: D
   }, [volume]);
 
   const { day, date } = formatDate(now);
-  const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const secs = String(elapsed % 60).padStart(2, '0');
-  const timeStr = `${mins}:${secs}`;
+  const timeStr = formatElapsed(elapsed);
   const volPct = `${Math.round(volume * 100)}%`;
+
+  const isScratching = scratchRate !== 1;
 
   const line1 = showSong && activeAlbum ? activeAlbum.title : day;
   const line2 = showSong && activeAlbum ? activeAlbum.artist : date;
@@ -102,6 +160,11 @@ export function DateBadge({ activeAlbum, isPlaying, isLoading, volume = 0.7 }: D
               <div className={`${styles.eqBar} ${styles.eq6}`} />
               <div className={`${styles.eqBar} ${styles.eq7}`} />
             </div>
+          </div>
+        ) : isScratching ? (
+          <div className={styles.scratchBlock} key="scratch">
+            <ScratchIcon />
+            <span className={styles.scratchTime}>{timeStr}</span>
           </div>
         ) : showVolume ? (
           <div className={styles.volBlock} key={`vol-${volPct}`}>
