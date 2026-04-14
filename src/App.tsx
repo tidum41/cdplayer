@@ -371,21 +371,23 @@ export default function App() {
 
             {/* Album Grid */}
             <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
-              <div className={styles.dragHint} aria-hidden="true">
-                {/* Disc that slides right, suggesting drag direction */}
-                <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="6.3" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="0.8"/>
-                  <circle cx="7" cy="7" r="3.8" stroke="currentColor" strokeWidth="0.5" fillOpacity="0"/>
-                  <circle cx="7" cy="7" r="1.4" fill="currentColor"/>
-                </svg>
-                {/* Dotted trail */}
-                <span className={styles.dragHintTrail}>· · ·</span>
-                {/* Arrow */}
-                <svg className={styles.dragHintArrow} width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M0 4H8M8 4L5 1M8 4L5 7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>drag to play</span>
-              </div>
+              {!activeAlbum && (
+                <div className={`${styles.dragHint} ${isVertical ? styles.dragHintVertical : ''}`} aria-hidden="true">
+                  {/* Disc that slides left/up, suggesting drag direction toward player */}
+                  <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="6.3" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="0.8"/>
+                    <circle cx="7" cy="7" r="3.8" stroke="currentColor" strokeWidth="0.5" fillOpacity="0"/>
+                    <circle cx="7" cy="7" r="1.4" fill="currentColor"/>
+                  </svg>
+                  {/* Dotted trail */}
+                  <span className={styles.dragHintTrail}>· · ·</span>
+                  {/* Left-pointing arrow; rotated -90° in vertical mode via CSS */}
+                  <svg className={styles.dragHintArrow} width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M9 4H1M1 4L4 1M1 4L4 7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>drag to play</span>
+                </div>
+              )}
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
                 gridWidth={isVertical ? undefined : gridWidth}

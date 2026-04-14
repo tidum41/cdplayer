@@ -11,8 +11,8 @@ interface DiscProps {
   onEjectDragCancel?: () => void;
 }
 
-// Slightly slower — 16-second revolution at 60fps
-const TARGET_DEG_PER_FRAME = 360 / (16 * 60);
+// Slow and meditative — 26-second revolution at 60fps
+const TARGET_DEG_PER_FRAME = 360 / (26 * 60);
 const ACCEL = 0.032;  // ramp-up
 const DECEL = 0.020;  // ramp-down (inertia)
 

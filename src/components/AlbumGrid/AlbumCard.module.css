@@ -5,6 +5,8 @@
   cursor: grab;
   user-select: none;
   min-height: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none; /* let dnd-kit own all touch events */
 }
 
 .card:active { cursor: grabbing; }
@@ -15,7 +17,7 @@
   flex: 0 0 auto;
 }
 
-/* Disc that lives behind the album cover — peeks out on hover, slides out on drag */
+/* Disc that lives behind the album cover — invisible by default, slides out on drag */
 .discBehind {
   position: absolute;
   top: 0;
@@ -24,7 +26,8 @@
   height: 100%;
   border-radius: 50%;
   z-index: 0;
-  transform: translateX(5px);
+  opacity: 0;
+  transform: translateX(0px);
   transition: transform 0.22s ease-out, opacity 0.22s ease-out;
   pointer-events: none;
   /* Disc visual: center hole + concentric rings via radial gradients */
@@ -34,16 +37,11 @@
     radial-gradient(circle, transparent 53%, rgba(0,0,0,0.06) 53%, rgba(0,0,0,0.06) 55%, transparent 55%);
 }
 
-/* Hover: disc slides out a bit more */
-.card:hover .discBehind {
-  transform: translateX(15px);
-}
-
-/* Dragging: disc slides far out (DragOverlay shows the flying disc) */
+/* Dragging: disc slides out from behind the cover */
 .card.dragging .discBehind {
-  transform: translateX(36px);
-  opacity: 0.5;
-  transition: transform 0.3s ease-out, opacity 0.18s ease-out;
+  transform: translateX(34px);
+  opacity: 0.9;
+  transition: transform 0.28s ease-out, opacity 0.15s ease-out;
 }
 
 .art {
