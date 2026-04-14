@@ -1,7 +1,6 @@
-import { useRef } from "react"
+import { useRef, useEffect, useState } from "react"
 import { addPropertyControls, ControlType } from "framer"
 
-// Update this to your deployed Vercel URL
 const EMBED_URL = "https://cdplayer-peach.vercel.app/"
 
 interface Props {
@@ -11,17 +10,24 @@ interface Props {
 
 // MusicPlayerEmbed — Framer code component
 //
-// How it works:
-//   • The iframe has pointerEvents:none so mouse events stay in Framer's DOM
-//     → Framer's custom JS cursor keeps tracking position over the embed.
-//   • A transparent overlay captures all pointer + click events and forwards
-//     them into the iframe via postMessage with iframe-relative coordinates.
-//   • allow="autoplay" lets the iframe inherit the parent page's user gesture
-//     so AudioContext + audio.play() work without needing a direct iframe click.
+// Desktop: iframe has pointerEvents:none + transparent overlay forwards all
+//   pointer/click events via postMessage → Framer's custom cursor stays visible.
+//
+// Touch (mobile/tablet): overlay is removed entirely so the iframe receives
+//   real touch events directly. This is necessary because:
+//   1. Mobile browsers don't show a JS cursor, so the overlay has no benefit.
+//   2. iOS Safari requires a real trusted event inside the iframe to unlock
+//      AudioContext / audio.play() — synthetic postMessage events are blocked.
 
 export default function MusicPlayerEmbed({ height = 550, style }: Props) {
     const containerRef = useRef<HTMLDivElement>(null)
     const iframeRef = useRef<HTMLIFrameElement>(null)
+    const [isTouch, setIsTouch] = useState(false)
+
+    useEffect(() => {
+        // hover:none = touch-primary device (phone / tablet)
+        setIsTouch(window.matchMedia("(hover: none)").matches)
+    }, [])
 
     function forward(e: { clientX: number; clientY: number }, type: string) {
         const rect = containerRef.current?.getBoundingClientRect()
@@ -59,17 +65,21 @@ export default function MusicPlayerEmbed({ height = 550, style }: Props) {
                     width: "100%",
                     height: "100%",
                     border: "none",
-                    pointerEvents: "none",
+                    // On touch: let iframe receive real events (audio + drag work natively).
+                    // On desktop: block events so Framer's JS cursor keeps tracking.
+                    pointerEvents: isTouch ? "auto" : "none",
                 }}
             />
-            {/* Transparent overlay: captures real pointer/click events, forwards to iframe */}
-            <div
-                onPointerDown={(e) => forward(e, "framer-pointerdown")}
-                onPointerMove={(e) => forward(e, "framer-pointermove")}
-                onPointerUp={(e) => forward(e, "framer-pointerup")}
-                onClick={(e) => forward(e, "framer-click")}
-                style={{ position: "absolute", inset: 0 }}
-            />
+            {/* Desktop-only overlay: captures pointer/click, forwards to iframe */}
+            {!isTouch && (
+                <div
+                    onPointerDown={(e) => forward(e, "framer-pointerdown")}
+                    onPointerMove={(e) => forward(e, "framer-pointermove")}
+                    onPointerUp={(e) => forward(e, "framer-pointerup")}
+                    onClick={(e) => forward(e, "framer-click")}
+                    style={{ position: "absolute", inset: 0 }}
+                />
+            )}
         </div>
     )
 }

@@ -24,7 +24,7 @@ export const albums: Album[] = [
   {
     id: '1',
     title: 'Flash in the Pan',
-    artist: 'jane remover',
+    artist: 'Jane Remover',
     color: '#8475A0',
     artUrl: '/music/janeremover-flashinthepan-cover.jpeg',
     audioUrl: '/music/janeremover-flashinthepan.mp3',
@@ -72,18 +72,18 @@ export const albums: Album[] = [
   {
     id: '7',
     title: "Can't Get Over You",
-    artist: 'joji',
+    artist: 'Joji',
     color: '#907868',
     artUrl: '/music/joji-cantgetoveryou-cover.jpg',
     audioUrl: '/music/joji-cantgetoveryouaudio.mp3',
   },
   {
     id: '8',
-    title: 'Golden',
-    artist: 'KPOP DEMON HUNTERS',
-    color: '#C8A030',
-    artUrl: '/music/kpopdemonhunters-cover.jpg',
-    audioUrl: '/music/kpopdemonhunters-golden.mp3',
+    title: 'Lean 4 Real',
+    artist: 'Playboi Carti',
+    color: '#5C3A4A',
+    artUrl: '/music/playboicarti-lean4real.jpg',
+    audioUrl: '/music/Lean 4 Real.mp3',
   },
   {
     id: '9',

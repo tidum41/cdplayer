@@ -143,3 +143,30 @@ body {
 .carouselNav svg {
   width: 16px; height: 16px; fill: currentColor;
 }
+
+/* ── Drag hint ──────────────────────────────────────────────────────────── */
+
+.dragHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.35;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+  user-select: none;
+  padding: 0 2px 12px;
+  align-self: flex-start;
+}
+
+.dragHintDisc {
+  flex-shrink: 0;
+  animation: dragHintSpin 5s linear infinite;
+}
+
+@keyframes dragHintSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

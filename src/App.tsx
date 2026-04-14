@@ -161,7 +161,7 @@ export default function App() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } })
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -371,6 +371,14 @@ export default function App() {
 
             {/* Album Grid */}
             <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
+              <div className={styles.dragHint} aria-hidden="true">
+                <svg className={styles.dragHintDisc} width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5.8" stroke="currentColor" strokeWidth="0.9"/>
+                  <circle cx="6.5" cy="6.5" r="3.4" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
+                  <circle cx="6.5" cy="6.5" r="1.2" fill="currentColor"/>
+                </svg>
+                <span>drag a cd to play</span>
+              </div>
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
                 gridWidth={isVertical ? undefined : gridWidth}
