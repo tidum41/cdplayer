@@ -82,7 +82,7 @@ export const albums: Album[] = [
     title: 'Lean 4 Real',
     artist: 'Playboi Carti',
     color: '#5C3A4A',
-    artUrl: '/music/playboicarti-lean4real.jpg',
+    artUrl: '/music/playboicarti-lean4real-cover.jpg',
     audioUrl: '/music/Lean 4 Real.mp3',
   },
   {

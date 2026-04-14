@@ -32,6 +32,11 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap }: Al
         className={styles.artWrap}
         style={{ width: artSize, height: artSize }}
       >
+        {/* Disc that peeks out from behind the cover and slides out when dragging */}
+        <div
+          className={styles.discBehind}
+          style={{ backgroundColor: resolvedColor ?? album.color }}
+        />
         <div
           className={styles.art}
           style={{

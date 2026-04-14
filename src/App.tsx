@@ -58,8 +58,8 @@ export default function App() {
 
     if (vertical) {
       // Vertical: Player scaling accurately offsets static heights needed for carousel and padding.
-      // 120 (art) + 65 (text) + 32 (padding) + gaps = roughly 250px hard-allocated space.
-      const RESERVED_CAROUSEL_H = 280;
+      // 90 (art) + 30 (text) + 24 (padding) + gaps ≈ 180px; +40 buffer = 220px reserved.
+      const RESERVED_CAROUSEL_H = 220;
       const availW = W * 0.95;
       const availH = Math.max(100, H - RESERVED_CAROUSEL_H);
       const s = Math.min(1, availW / PLAYER_W, availH / PLAYER_H);
@@ -285,8 +285,8 @@ export default function App() {
   let gridWidth: number;
 
   if (isVertical) {
-    // Vertical: single-row carousel, use a fixed size that fits safely in mobile
-    artSize = 120; 
+    // Vertical: single-row carousel, compact art so player gets more height
+    artSize = 90;
     gridWidth = 0; // Not used in carousel mode
   } else {
     // Horizontal: grid mathematically constrained by BOTH width and height to prevent scrolling natively
@@ -372,12 +372,19 @@ export default function App() {
             {/* Album Grid */}
             <div className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}>
               <div className={styles.dragHint} aria-hidden="true">
-                <svg className={styles.dragHintDisc} width="13" height="13" viewBox="0 0 13 13" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5.8" stroke="currentColor" strokeWidth="0.9"/>
-                  <circle cx="6.5" cy="6.5" r="3.4" stroke="currentColor" strokeWidth="0.6" opacity="0.5"/>
-                  <circle cx="6.5" cy="6.5" r="1.2" fill="currentColor"/>
+                {/* Disc that slides right, suggesting drag direction */}
+                <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="6.3" fill="currentColor" fillOpacity="0.18" stroke="currentColor" strokeWidth="0.8"/>
+                  <circle cx="7" cy="7" r="3.8" stroke="currentColor" strokeWidth="0.5" fillOpacity="0"/>
+                  <circle cx="7" cy="7" r="1.4" fill="currentColor"/>
                 </svg>
-                <span>drag a cd to play</span>
+                {/* Dotted trail */}
+                <span className={styles.dragHintTrail}>· · ·</span>
+                {/* Arrow */}
+                <svg className={styles.dragHintArrow} width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M0 4H8M8 4L5 1M8 4L5 7" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>drag to play</span>
               </div>
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
