@@ -203,7 +203,7 @@ export default function App() {
       // Ease-in curve: disc stays small most of the journey, grows fast near the platter
       const t = rawT * rawT;
       const minSize = artSizeRef.current;
-      const targetSize = artSizeRef.current * 2.2;
+      const targetSize = PLATTER_SIZE * scale * 0.92; // grows to match rendered platter size
       setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
     }
 

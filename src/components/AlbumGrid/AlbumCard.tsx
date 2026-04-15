@@ -1,5 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import type { Album } from '../../data/albums';
+import { DragDisc } from '../Disc/DragDisc';
 import styles from './AlbumCard.module.css';
 
 type DragDir = 'left' | 'right' | 'up' | 'down' | null;
@@ -46,15 +47,16 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, drag
         className={styles.artWrap}
         style={{ width: artSize, height: artSize }}
       >
-        {/* Disc behind cover — slides in the direction the card is being dragged */}
+        {/* Disc peek — same DragDisc used as drag ghost, slides in drag direction */}
         <div
-          className={styles.discBehind}
+          className={styles.discPeek}
           style={{
-            backgroundColor: resolvedColor ?? album.color,
             transform: discTransform(isDragging, dragDirection ?? null),
-            ...(isDragging && !dragDirection ? { opacity: 0 } : {}),
+            opacity: isDragging && dragDirection !== null ? 1 : 0,
           }}
-        />
+        >
+          <DragDisc size={artSize} color={resolvedColor ?? album.color} />
+        </div>
         <div
           className={styles.art}
           style={{

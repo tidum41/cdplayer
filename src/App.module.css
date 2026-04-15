@@ -4,6 +4,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   position: relative;
+  overflow-x: hidden; /* prevent disc-peek from expanding body and triggering horizontal scroll */
 }
 
 body {

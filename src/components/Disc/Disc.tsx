@@ -13,7 +13,7 @@ interface DiscProps {
 
 // Slow and meditative — 26-second revolution at 60fps
 const TARGET_DEG_PER_FRAME = 360 / (26 * 60);
-const ACCEL = 0.032;  // ramp-up
+const ACCEL = 0.010;  // slow spin-up over ~3-4s, mirrors DECEL feel
 const DECEL = 0.020;  // ramp-down (inertia)
 
 export function Disc({
