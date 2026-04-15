@@ -68,8 +68,11 @@
   font-weight: 500;
   color: #1a1a1a;
   line-height: 1.35;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* 2-line cap — never overflows its container */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .artist {
@@ -78,8 +81,10 @@
   font-weight: 400;
   color: #888;
   line-height: 1.35;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* single line with ellipsis — artist name never wraps */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* When being dragged, card dims to show CD left */

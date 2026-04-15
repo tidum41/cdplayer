@@ -80,6 +80,7 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
           artSize={artSize}
           resolvedColor={colorMap?.[album.id]}
           onTap={onAlbumTap}
+          dragDirection={dragDirection}
         />
       ))}
     </div>

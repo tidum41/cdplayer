@@ -40,18 +40,23 @@ body {
   position: relative;
 }
 
+/* Outer wrapper: positions the floating hint above gridCol without overflow clipping */
+.gridColWrapper {
+  flex: 0 0 auto;
+  position: relative; /* hint anchors here */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .gridCol {
-  flex: 0 0 auto;     /* fixed width — doesn't stretch to fill viewport */
   min-width: 0;
-  /* Allow vertical scroll if grid taller than player */
   max-height: calc(100% - 32px);
   overflow-y: auto;
-  overflow-x: clip;   /* clip disc-peek overflow; prevents horizontal scroll/layout shift */
+  overflow-x: clip;   /* prevents disc-peek from creating horizontal scroll */
   display: flex;
-  flex-direction: column;   /* hint stacks above grid */
   align-items: center;
   justify-content: center;
-  position: relative;
   scrollbar-width: none;
 }
 .gridCol::-webkit-scrollbar { display: none; }
@@ -92,8 +97,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;       /* horizontally centers the inner AlbumGrid */
-  padding: 12px 16px 0;
-  position: relative;
+  padding: 8px 16px 0;
 }
 
 /* Carousel container that wraps AlbumGrid in vertical mode */
@@ -145,8 +149,6 @@ body {
   width: 16px; height: 16px; fill: currentColor;
 }
 
-/* ── Drag hint ──────────────────────────────────────────────────────────── */
-
 /* ── Drag hint — shared base ──────────────────────────────────────────── */
 
 .dragHintH,
@@ -162,23 +164,27 @@ body {
   color: rgba(0, 0, 0, 0.6);
   pointer-events: none;
   user-select: none;
+  white-space: nowrap;
+  transition: opacity 0.25s ease;
 }
 
-/* ── Horizontal: in-flow above the album grid, centered with it ─────────── */
+/* ── Horizontal: floats above gridColWrapper, never inside overflow container */
 
 .dragHintH {
-  align-self: center;
-  white-space: nowrap;
-  padding: 0 0 10px;
+  position: absolute;
+  bottom: calc(100% + 10px); /* float above the wrapper without affecting its height */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
 }
 
-/* ── Vertical: in-flow between player and grid ─────────────────────────── */
+/* ── Vertical: inline flex item between player and carousel — stable layout */
 
 .dragHintV {
-  align-self: center;
-  padding: 8px 0;
-  flex-direction: row;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  justify-content: center;
+  height: 26px;        /* fixed reserved height — grid never shifts */
+  padding: 0 4px;
 }
 
 /* ── Shared animated children ─────────────────────────────────────────── */

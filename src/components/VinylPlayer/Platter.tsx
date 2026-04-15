@@ -7,13 +7,14 @@ interface PlatterProps {
   activeAlbum: Album | null;
   isPlaying: boolean;
   snapAnim: boolean;
+  ejectAnim: boolean;
   onEject?: () => void;
   onScratch?: (degPerMs: number) => void;
   onEjectDragMove?: (clientX: number, clientY: number) => void;
   onEjectDragCancel?: () => void;
 }
 
-export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch, onEjectDragMove, onEjectDragCancel }: PlatterProps) {
+export function Platter({ activeAlbum, isPlaying, snapAnim, ejectAnim, onEject, onScratch, onEjectDragMove, onEjectDragCancel }: PlatterProps) {
   const { setNodeRef, isOver } = useDroppable({ id: 'platter' });
 
   return (
@@ -21,15 +22,17 @@ export function Platter({ activeAlbum, isPlaying, snapAnim, onEject, onScratch, 
       ref={setNodeRef}
       className={`${styles.platter} ${isOver ? styles.over : ''} ${snapAnim ? styles.snapIn : ''}`}
     >
-      <Disc
-        size={835}
-        isSpinning={isPlaying && !!activeAlbum}
-        showArcs={!!activeAlbum}
-        onEject={onEject}
-        onScratch={onScratch}
-        onEjectDragMove={onEjectDragMove}
-        onEjectDragCancel={onEjectDragCancel}
-      />
+      <div className={`${styles.discWrapper} ${ejectAnim ? styles.snapOut : ''}`}>
+        <Disc
+          size={835}
+          isSpinning={isPlaying && !!activeAlbum}
+          showArcs={!!activeAlbum}
+          onEject={onEject}
+          onScratch={onScratch}
+          onEjectDragMove={onEjectDragMove}
+          onEjectDragCancel={onEjectDragCancel}
+        />
+      </div>
     </div>
   );
 }

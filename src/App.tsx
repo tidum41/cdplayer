@@ -37,9 +37,11 @@ export default function App() {
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
+  const [ejectAnim, setEjectAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
   const [dragDiscSize, setDragDiscSize] = useState(120);
+  const [dragDistance, setDragDistance] = useState(0); // cumulative px from drag start
   const [isVertical, setIsVertical] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
   const [showConsent, setShowConsent] = useState(false);
@@ -47,6 +49,8 @@ export default function App() {
   const pendingAlbumRef = useRef<Album | null>(null);
 
   const platterCenterRef = useRef<{ x: number; y: number } | null>(null);
+  const dragStartDistRef = useRef(0); // distance from drag-start to platter center
+  const ejectAnimatingRef = useRef(false); // guard against double-eject
   const containerRef = useRef<HTMLDivElement>(null);
   const artSizeRef = useRef(120); // updated each render; handlers see current artSize via closure
 
@@ -169,28 +173,41 @@ export default function App() {
   function handleDragStart(event: DragStartEvent) {
     setDragAlbum(event.active.data.current?.album ?? null);
     setDragDiscSize(artSizeRef.current);
+    setDragDistance(0);
     setDragDirection(null);
     updatePlatterCenter();
+    // Record starting distance to platter so proximity scaling is proportional
+    if (platterCenterRef.current && event.activatorEvent) {
+      const pe = event.activatorEvent as PointerEvent;
+      const dx = pe.clientX - platterCenterRef.current.x;
+      const dy = pe.clientY - platterCenterRef.current.y;
+      dragStartDistRef.current = Math.sqrt(dx * dx + dy * dy) || 400;
+    }
   }
 
   function handleDragMove(event: DragMoveEvent) {
-    // Grow disc toward platter as cursor approaches
+    const dx = event.delta?.x ?? 0;
+    const dy = event.delta?.y ?? 0;
+    const totalDist = Math.sqrt(dx * dx + dy * dy);
+    setDragDistance(totalDist);
+
+    // Grow disc proportionally as cursor approaches platter
     if (platterCenterRef.current && event.activatorEvent) {
       const pe = event.activatorEvent as PointerEvent;
-      const cursorX = pe.clientX + (event.delta?.x ?? 0);
-      const cursorY = pe.clientY + (event.delta?.y ?? 0);
+      const cursorX = pe.clientX + dx;
+      const cursorY = pe.clientY + dy;
       const pc = platterCenterRef.current;
       const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
-      const maxDist = 380;
+      // t=0 at drag start (far from platter), t=1 at platter center
+      const rawT = Math.max(0, Math.min(1, 1 - dist / dragStartDistRef.current));
+      // Ease-in curve: disc stays small most of the journey, grows fast near the platter
+      const t = rawT * rawT;
       const minSize = artSizeRef.current;
-      const targetSize = artSizeRef.current * 2.2; // max ~2.2× art size, never fills the player
-      const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
+      const targetSize = artSizeRef.current * 2.2;
       setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
     }
 
     // Track cardinal drag direction (4-way only, threshold 8px)
-    const dx = event.delta?.x ?? 0;
-    const dy = event.delta?.y ?? 0;
     if (Math.abs(dx) >= 8 || Math.abs(dy) >= 8) {
       if (Math.abs(dx) >= Math.abs(dy)) {
         setDragDirection(dx > 0 ? 'right' : 'left');
@@ -228,6 +245,7 @@ export default function App() {
 
     setDragAlbum(null);
     setDragDiscSize(artSizeRef.current);
+    setDragDistance(0);
     setDragDirection(null);
   }
 
@@ -265,11 +283,18 @@ export default function App() {
   }, [pause, pauseAudio, audioEnabled]);
 
   const handleEject = useCallback(() => {
-    eject();
-    setDragAlbum(null);
-    setEjectDragPos(null);
-    setScratchRate(1);
-    if (audioEnabled !== false) stopAudio();
+    if (ejectAnimatingRef.current) return;
+    ejectAnimatingRef.current = true;
+    setEjectAnim(true);
+    setTimeout(() => {
+      setEjectAnim(false);
+      ejectAnimatingRef.current = false;
+      eject();
+      setDragAlbum(null);
+      setEjectDragPos(null);
+      setScratchRate(1);
+      if (audioEnabled !== false) stopAudio();
+    }, 440);
   }, [eject, stopAudio, audioEnabled]);
 
   const handleScratch = useCallback((degPerMs: number) => {
@@ -372,6 +397,7 @@ export default function App() {
                     onVolumeUp={volumeUp}
                     onVolumeDown={volumeDown}
                     snapAnim={snapAnim}
+                    ejectAnim={ejectAnim}
                     volume={volume}
                     analyserRef={analyserRef}
                     onScratch={handleScratch}
@@ -383,10 +409,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Vertical: hint sits between player and carousel */}
-            {!activeAlbum && isVertical && (
-              <div className={styles.dragHintV} aria-hidden="true">
-                <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
+            {/* Vertical hint: always in DOM between player and carousel, fades with opacity */}
+            {isVertical && (
+              <div
+                className={styles.dragHintV}
+                style={{ opacity: activeAlbum ? 0 : 1 }}
+                aria-hidden="true"
+              >
+                <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
                   <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
                   <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
@@ -398,13 +428,15 @@ export default function App() {
               </div>
             )}
 
-            {/* Album Grid */}
-            <div
-              className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}
-              style={isVertical ? undefined : { width: gridWidth }}
-            >
-              {!activeAlbum && !isVertical && (
-                <div className={styles.dragHintH} aria-hidden="true">
+            {/* Album Grid — wrapped in relative div so horizontal hint floats above without being clipped by overflow */}
+            <div className={styles.gridColWrapper} style={isVertical ? { width: '100%' } : { width: gridWidth }}>
+              {/* Horizontal hint: absolute above gridCol, never inside the overflow container */}
+              {!isVertical && (
+                <div
+                  className={styles.dragHintH}
+                  style={{ opacity: activeAlbum ? 0 : 1 }}
+                  aria-hidden="true"
+                >
                   <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
                     <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
@@ -416,22 +448,27 @@ export default function App() {
                   <span>drag to play</span>
                 </div>
               )}
-              <AlbumGrid
-                activeAlbumId={activeAlbum?.id ?? null}
-                gridWidth={isVertical ? undefined : gridWidth}
-                artSize={artSize}
-                colorMap={colorMap}
-                isCarousel={isVertical}
-                onAlbumTap={handleAlbumTap}
-                dragDirection={dragDirection}
-              />
+              <div
+                className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}
+              >
+                <AlbumGrid
+                  activeAlbumId={activeAlbum?.id ?? null}
+                  gridWidth={isVertical ? undefined : gridWidth}
+                  artSize={artSize}
+                  colorMap={colorMap}
+                  isCarousel={isVertical}
+                  onAlbumTap={handleAlbumTap}
+                  dragDirection={dragDirection}
+                />
+              </div>
             </div>
 
           </div>
         </div>
 
         <DragOverlay dropAnimation={null}>
-          {dragAlbum ? (
+          {/* Two-stage drag: disc peek shows immediately, DragOverlay appears after 16px of movement */}
+          {dragAlbum && dragDistance >= 16 ? (
             <div style={{
               width: dragDiscSize,
               height: dragDiscSize,
