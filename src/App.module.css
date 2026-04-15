@@ -26,10 +26,10 @@ body {
 .contentBox {
   display: flex;
   align-items: center;
-  gap: 8px;           /* tighter gap → shorter drag distance */
+  gap: 20px;
   justify-content: center;
   width: 100%;
-  padding: 0 16px;
+  padding: 0 24px;
 }
 
 .playerCol {
@@ -46,11 +46,12 @@ body {
   /* Allow vertical scroll if grid taller than player */
   max-height: calc(100% - 32px);
   overflow-y: auto;
+  overflow-x: clip;   /* clip disc-peek overflow; prevents horizontal scroll/layout shift */
   display: flex;
+  flex-direction: column;   /* hint stacks above grid */
   align-items: center;
   justify-content: center;
   position: relative;
-  /* hide native scrollbar — scroll still works */
   scrollbar-width: none;
 }
 .gridCol::-webkit-scrollbar { display: none; }
@@ -163,15 +164,12 @@ body {
   user-select: none;
 }
 
-/* ── Horizontal: absolute centered between the two columns ─────────────── */
+/* ── Horizontal: in-flow above the album grid, centered with it ─────────── */
 
 .dragHintH {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  align-self: center;
   white-space: nowrap;
-  z-index: 5;
+  padding: 0 0 10px;
 }
 
 /* ── Vertical: in-flow between player and grid ─────────────────────────── */
@@ -209,21 +207,6 @@ body {
   45%  { transform: translateY(-8px) scale(1.14); }
   55%  { transform: translateY(-8px) scale(1.14); }
   100% { transform: translateY(0px) scale(1); }
-}
-
-/* Trail dots pulse in sync */
-.dragHintTrail {
-  letter-spacing: 0.15em;
-  font-size: 9px;
-  margin: 0 -2px;
-  animation: dragHintTrailFade 2.6s ease-in-out infinite;
-}
-
-@keyframes dragHintTrailFade {
-  0%   { opacity: 0.2; }
-  45%  { opacity: 0.6; }
-  55%  { opacity: 0.6; }
-  100% { opacity: 0.2; }
 }
 
 /* Arrow brightens as disc slides toward player */

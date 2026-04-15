@@ -48,6 +48,7 @@ export default function App() {
 
   const platterCenterRef = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const artSizeRef = useRef(120); // updated each render; handlers see current artSize via closure
 
   const updateScale = useCallback(() => {
     const el = containerRef.current;
@@ -167,7 +168,7 @@ export default function App() {
 
   function handleDragStart(event: DragStartEvent) {
     setDragAlbum(event.active.data.current?.album ?? null);
-    setDragDiscSize(120);
+    setDragDiscSize(artSizeRef.current);
     setDragDirection(null);
     updatePlatterCenter();
   }
@@ -180,9 +181,9 @@ export default function App() {
       const cursorY = pe.clientY + (event.delta?.y ?? 0);
       const pc = platterCenterRef.current;
       const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
-      const maxDist = 500;
-      const targetSize = PLATTER_SIZE * scale;
-      const minSize = 120;
+      const maxDist = 380;
+      const minSize = artSizeRef.current;
+      const targetSize = artSizeRef.current * 2.2; // max ~2.2× art size, never fills the player
       const t = Math.max(0, Math.min(1, 1 - dist / maxDist));
       setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
     }
@@ -226,7 +227,7 @@ export default function App() {
     }
 
     setDragAlbum(null);
-    setDragDiscSize(120);
+    setDragDiscSize(artSizeRef.current);
     setDragDirection(null);
   }
 
@@ -314,6 +315,7 @@ export default function App() {
     artSize   = Math.max(40, Math.min(120, artFromH));
     gridWidth  = artSize * 3 + GRID_GAP * 2;
   }
+  artSizeRef.current = artSize;
 
   // ── Eject drag disc size ──────────────────────────────────────────────────
   let ejectDiscSize = 0;
@@ -346,22 +348,6 @@ export default function App() {
           className={`${styles.layout} ${isVertical ? styles.layoutVertical : ''}`}
           ref={containerRef}
         >
-          {/* ── Horizontal: hint floats centered between player and grid ── */}
-          {!activeAlbum && !isVertical && (
-            <div className={styles.dragHintH} aria-hidden="true">
-              <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
-                <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
-                <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
-              </svg>
-              <span className={styles.dragHintTrail}>· · ·</span>
-              <svg className={styles.dragHintArrow} width="11" height="9" viewBox="0 0 11 9" fill="none">
-                <path d="M10 4.5H1M1 4.5L4.5 1M1 4.5L4.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>drag to play</span>
-            </div>
-          )}
-
           <div className={`${styles.contentBox} ${isVertical ? styles.contentBoxVertical : ''}`}>
 
             {/* CD Player */}
@@ -405,8 +391,6 @@ export default function App() {
                   <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
                   <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
                 </svg>
-                <span className={styles.dragHintTrail}>· · ·</span>
-                {/* Arrow points up in vertical mode */}
                 <svg className={styles.dragHintArrow} width="9" height="11" viewBox="0 0 9 11" fill="none">
                   <path d="M4.5 10V1M4.5 1L1 4.5M4.5 1L8 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -419,6 +403,19 @@ export default function App() {
               className={`${styles.gridCol} ${isVertical ? styles.gridColVertical : ''}`}
               style={isVertical ? undefined : { width: gridWidth }}
             >
+              {!activeAlbum && !isVertical && (
+                <div className={styles.dragHintH} aria-hidden="true">
+                  <svg className={styles.dragHintDisc} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
+                    <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
+                    <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+                  </svg>
+                  <svg className={styles.dragHintArrow} width="11" height="9" viewBox="0 0 11 9" fill="none">
+                    <path d="M10 4.5H1M1 4.5L4.5 1M1 4.5L4.5 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>drag to play</span>
+                </div>
+              )}
               <AlbumGrid
                 activeAlbumId={activeAlbum?.id ?? null}
                 gridWidth={isVertical ? undefined : gridWidth}

@@ -14,13 +14,13 @@ interface AlbumCardProps {
 }
 
 function discTransform(isDragging: boolean, dir: DragDir): string {
-  if (!isDragging) return 'translateX(0)';
+  if (!isDragging || dir === null) return 'translateX(0)';
   switch (dir) {
     case 'left':  return 'translateX(-36px)';
     case 'right': return 'translateX(36px)';
     case 'up':    return 'translateY(-36px)';
     case 'down':  return 'translateY(36px)';
-    default:      return 'translateX(36px)'; // no movement yet → default right
+    default:      return 'translateX(0)';
   }
 }
 
@@ -52,6 +52,7 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, drag
           style={{
             backgroundColor: resolvedColor ?? album.color,
             transform: discTransform(isDragging, dragDirection ?? null),
+            ...(isDragging && !dragDirection ? { opacity: 0 } : {}),
           }}
         />
         <div
