@@ -13,11 +13,14 @@ interface AlbumGridProps {
   isCarousel?: boolean;
   onAlbumTap?: (album: Album) => void;
   dragDirection?: DragDir;
+  dragDelta?: { x: number; y: number };
+  dragDiscSize?: number;
+  showHint?: boolean;
 }
 
 const GRID_GAP = 14;
 
-export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap, dragDirection }: AlbumGridProps) {
+export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap, dragDirection, dragDelta, dragDiscSize, showHint }: AlbumGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -35,29 +38,50 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
   if (isCarousel) {
     const arrowTop = 16 + artSize / 2;
     return (
-      <div className={appStyles.carouselWrap}>
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} style={{ top: arrowTop }} onClick={scrollLeft} aria-label="Scroll left">
-          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-        
-        <div className={appStyles.carouselContainer} ref={scrollRef}>
-          {albums.map(album => (
-            <div key={album.id} style={{ scrollSnapAlign: 'center', flexShrink: 0, width: artSize }}>
-              <AlbumCard
-                album={album}
-                isActive={album.id === activeAlbumId}
-                artSize={artSize}
-                resolvedColor={colorMap?.[album.id]}
-                onTap={onAlbumTap}
-                dragDirection={dragDirection}
-              />
-            </div>
-          ))}
+      <div style={{ width: '100%' }}>
+        {/* Vertical hint lives here — always reserves space so carousel never shifts */}
+        <div
+          className={appStyles.dragHintV}
+          style={{ opacity: showHint ? 1 : 0 }}
+          aria-hidden="true"
+        >
+          <svg className={appStyles.dragHintDisc} width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
+            <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
+            <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+          </svg>
+          <svg className={appStyles.dragHintArrow} width="9" height="11" viewBox="0 0 9 11" fill="none">
+            <path d="M4.5 10V1M4.5 1L1 4.5M4.5 1L8 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>drag to play</span>
         </div>
 
-        <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} style={{ top: arrowTop }} onClick={scrollRight} aria-label="Scroll right">
-          <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
+        <div className={appStyles.carouselWrap}>
+          <button className={`${appStyles.carouselNav} ${appStyles.carouselNavLeft}`} style={{ top: arrowTop }} onClick={scrollLeft} aria-label="Scroll left">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+
+          <div className={appStyles.carouselContainer} ref={scrollRef}>
+            {albums.map(album => (
+              <div key={album.id} style={{ scrollSnapAlign: 'center', flexShrink: 0, width: artSize }}>
+                <AlbumCard
+                  album={album}
+                  isActive={album.id === activeAlbumId}
+                  artSize={artSize}
+                  resolvedColor={colorMap?.[album.id]}
+                  onTap={onAlbumTap}
+                  dragDirection={dragDirection}
+                  dragDelta={dragDelta}
+                  dragDiscSize={dragDiscSize}
+                />
+              </div>
+            ))}
+          </div>
+
+          <button className={`${appStyles.carouselNav} ${appStyles.carouselNavRight}`} style={{ top: arrowTop }} onClick={scrollRight} aria-label="Scroll right">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
       </div>
     );
   }
@@ -81,6 +105,8 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
           resolvedColor={colorMap?.[album.id]}
           onTap={onAlbumTap}
           dragDirection={dragDirection}
+          dragDelta={dragDelta}
+          dragDiscSize={dragDiscSize}
         />
       ))}
     </div>

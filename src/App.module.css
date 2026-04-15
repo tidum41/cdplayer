@@ -179,13 +179,13 @@ body {
   z-index: 5;
 }
 
-/* ── Vertical: inline flex item between player and carousel — stable layout */
+/* ── Vertical: sits above the carousel inside AlbumGrid — never near the player */
 
 .dragHintV {
-  flex: 0 0 auto;
   justify-content: center;
-  height: 26px;        /* fixed reserved height — grid never shifts */
+  height: 26px;        /* fixed reserved height — carousel never shifts */
   padding: 0 4px;
+  width: 100%;
 }
 
 /* ── Shared animated children ─────────────────────────────────────────── */

@@ -12,20 +12,11 @@ interface AlbumCardProps {
   resolvedColor?: string;
   onTap?: (album: Album) => void;
   dragDirection?: DragDir;
+  dragDelta?: { x: number; y: number };
+  dragDiscSize?: number;
 }
 
-function discTransform(isDragging: boolean, dir: DragDir): string {
-  if (!isDragging || dir === null) return 'translateX(0)';
-  switch (dir) {
-    case 'left':  return 'translateX(-36px)';
-    case 'right': return 'translateX(36px)';
-    case 'up':    return 'translateY(-36px)';
-    case 'down':  return 'translateY(36px)';
-    default:      return 'translateX(0)';
-  }
-}
-
-export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, dragDirection }: AlbumCardProps) {
+export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, dragDirection, dragDelta, dragDiscSize }: AlbumCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: album.id,
     data: { album },
@@ -34,6 +25,17 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, drag
   const handleClick = () => {
     onTap?.(album);
   };
+
+  // Disc peek: only becomes visible once a direction is established (>8px threshold).
+  // Position is calculated so the disc center follows the cursor exactly from its
+  // starting position behind the cover. Grows toward platter size as it approaches.
+  const directionLocked = isDragging && dragDirection !== null;
+  const discSize = isDragging ? (dragDiscSize ?? artSize) : artSize;
+  const deltaX = directionLocked ? (dragDelta?.x ?? 0) : 0;
+  const deltaY = directionLocked ? (dragDelta?.y ?? 0) : 0;
+  // Disc positioned so its center sits at artWrap center + drag delta
+  const peekLeft = artSize / 2 + deltaX - discSize / 2;
+  const peekTop  = artSize / 2 + deltaY - discSize / 2;
 
   return (
     <div
@@ -47,15 +49,18 @@ export function AlbumCard({ album, isActive, artSize, resolvedColor, onTap, drag
         className={styles.artWrap}
         style={{ width: artSize, height: artSize }}
       >
-        {/* Disc peek — same DragDisc used as drag ghost, slides in drag direction */}
+        {/* Disc peek — tracks cursor exactly; grows toward platter size as it approaches */}
         <div
           className={styles.discPeek}
           style={{
-            transform: discTransform(isDragging, dragDirection ?? null),
-            opacity: isDragging && dragDirection !== null ? 1 : 0,
+            left: peekLeft,
+            top: peekTop,
+            width: discSize,
+            height: discSize,
+            opacity: isDragging ? 1 : 0,
           }}
         >
-          <DragDisc size={artSize} color={resolvedColor ?? album.color} />
+          <DragDisc size={discSize} color={resolvedColor ?? album.color} />
         </div>
         <div
           className={styles.art}

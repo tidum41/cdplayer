@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   DndContext,
-  DragOverlay,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -34,14 +33,14 @@ export default function App() {
   const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio } = useAudio();
   const colorMap = useAlbumColors(albums);
   const [scratchRate, setScratchRate] = useState(1);
-  const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
+  const [, setDragAlbum] = useState<Album | null>(null);
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [ejectAnim, setEjectAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
   const [dragDiscSize, setDragDiscSize] = useState(120);
-  const [dragDistance, setDragDistance] = useState(0); // cumulative px from drag start
+  const [dragDelta, setDragDelta] = useState<{x: number; y: number}>({x: 0, y: 0});
   const [isVertical, setIsVertical] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
   const [showConsent, setShowConsent] = useState(false);
@@ -49,7 +48,6 @@ export default function App() {
   const pendingAlbumRef = useRef<Album | null>(null);
 
   const platterCenterRef = useRef<{ x: number; y: number } | null>(null);
-  const dragStartDistRef = useRef(0); // distance from drag-start to platter center
   const ejectAnimatingRef = useRef(false); // guard against double-eject
   const containerRef = useRef<HTMLDivElement>(null);
   const artSizeRef = useRef(120); // updated each render; handlers see current artSize via closure
@@ -173,37 +171,32 @@ export default function App() {
   function handleDragStart(event: DragStartEvent) {
     setDragAlbum(event.active.data.current?.album ?? null);
     setDragDiscSize(artSizeRef.current);
-    setDragDistance(0);
+    setDragDelta({x: 0, y: 0});
     setDragDirection(null);
     updatePlatterCenter();
-    // Record starting distance to platter so proximity scaling is proportional
-    if (platterCenterRef.current && event.activatorEvent) {
-      const pe = event.activatorEvent as PointerEvent;
-      const dx = pe.clientX - platterCenterRef.current.x;
-      const dy = pe.clientY - platterCenterRef.current.y;
-      dragStartDistRef.current = Math.sqrt(dx * dx + dy * dy) || 400;
-    }
   }
 
   function handleDragMove(event: DragMoveEvent) {
     const dx = event.delta?.x ?? 0;
     const dy = event.delta?.y ?? 0;
-    const totalDist = Math.sqrt(dx * dx + dy * dy);
-    setDragDistance(totalDist);
+    setDragDelta({x: dx, y: dy});
 
-    // Grow disc proportionally as cursor approaches platter
+    // Grow disc as cursor approaches platter. Use a fixed reference distance so
+    // overshooting the platter center never makes the disc shrink back.
     if (platterCenterRef.current && event.activatorEvent) {
       const pe = event.activatorEvent as PointerEvent;
       const cursorX = pe.clientX + dx;
       const cursorY = pe.clientY + dy;
       const pc = platterCenterRef.current;
       const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
-      // t=0 at drag start (far from platter), t=1 at platter center
-      const rawT = Math.max(0, Math.min(1, 1 - dist / dragStartDistRef.current));
-      // Ease-in curve: disc stays small most of the journey, grows fast near the platter
-      const t = rawT * rawT;
+      // Disc reaches full platter size when cursor is within 60px of platter center
+      const FULL_SIZE_DIST = 60;
+      // Disc starts growing when cursor is within GROWTH_DIST of platter center
+      const GROWTH_DIST = 380;
+      const rawT = Math.max(0, Math.min(1, 1 - (dist - FULL_SIZE_DIST) / (GROWTH_DIST - FULL_SIZE_DIST)));
+      const t = rawT * rawT; // ease-in
       const minSize = artSizeRef.current;
-      const targetSize = PLATTER_SIZE * scale * 0.92; // grows to match rendered platter size
+      const targetSize = PLATTER_SIZE * scale * 0.92;
       setDragDiscSize(Math.round(minSize + (targetSize - minSize) * t));
     }
 
@@ -245,7 +238,7 @@ export default function App() {
 
     setDragAlbum(null);
     setDragDiscSize(artSizeRef.current);
-    setDragDistance(0);
+    setDragDelta({x: 0, y: 0});
     setDragDirection(null);
   }
 
@@ -409,25 +402,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Vertical hint: always in DOM between player and carousel, fades with opacity */}
-            {isVertical && (
-              <div
-                className={styles.dragHintV}
-                style={{ opacity: activeAlbum ? 0 : 1 }}
-                aria-hidden="true"
-              >
-                <svg className={styles.dragHintDisc} width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7.2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9"/>
-                  <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="0.6" fill="none"/>
-                  <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
-                </svg>
-                <svg className={styles.dragHintArrow} width="9" height="11" viewBox="0 0 9 11" fill="none">
-                  <path d="M4.5 10V1M4.5 1L1 4.5M4.5 1L8 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>drag to play</span>
-              </div>
-            )}
-
             {/* Album Grid — wrapped in relative div so horizontal hint floats above without being clipped by overflow */}
             <div className={styles.gridColWrapper} style={isVertical ? { width: '100%' } : { width: gridWidth }}>
               {/* Horizontal hint: absolute above gridCol, never inside the overflow container */}
@@ -459,6 +433,9 @@ export default function App() {
                   isCarousel={isVertical}
                   onAlbumTap={handleAlbumTap}
                   dragDirection={dragDirection}
+                  dragDelta={dragDelta}
+                  dragDiscSize={dragDiscSize}
+                  showHint={!activeAlbum}
                 />
               </div>
             </div>
@@ -466,18 +443,6 @@ export default function App() {
           </div>
         </div>
 
-        <DragOverlay dropAnimation={null}>
-          {/* Two-stage drag: disc peek shows immediately, DragOverlay appears after 16px of movement */}
-          {dragAlbum && dragDistance >= 16 ? (
-            <div style={{
-              width: dragDiscSize,
-              height: dragDiscSize,
-              transition: 'width 0.15s ease-out, height 0.15s ease-out',
-            }}>
-              <DragDisc size={dragDiscSize} color={colorMap[dragAlbum.id] ?? dragAlbum.color} />
-            </div>
-          ) : null}
-        </DragOverlay>
       </DndContext>
 
       {/* Eject drag ghost — fixed-position disc that appears when dragging disc off platter */}
