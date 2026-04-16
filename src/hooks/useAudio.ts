@@ -125,5 +125,15 @@ export function useAudio() {
     }
   }, []);
 
-  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio };
+  /**
+   * Call synchronously inside a user gesture (tap/click/drag-end) to unlock the
+   * AudioContext on iOS Safari BEFORE any async delay (e.g. snap animation setTimeout).
+   * Without this, audio.play() called 1300ms later is outside the gesture and gets blocked.
+   */
+  const primeAudio = useCallback(() => {
+    const audio = getAudio();
+    connectAudioGraph(audio);
+  }, [getAudio, connectAudioGraph]);
+
+  return { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio, primeAudio };
 }

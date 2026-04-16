@@ -30,7 +30,7 @@ const TARGET_PLAYER_W_PX = 370;
 
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
-  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio } = useAudio();
+  const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio, primeAudio } = useAudio();
   const colorMap = useAlbumColors(albums);
   const [scratchRate, setScratchRate] = useState(1);
   const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
@@ -225,6 +225,9 @@ export default function App() {
   }
 
   const loadAlbumWithAudio = useCallback((album: Album, withAudio: boolean) => {
+    // Prime the AudioContext NOW (inside the user gesture) so iOS Safari doesn't
+    // block the audio.play() that fires 1300ms later inside a setTimeout.
+    if (withAudio) primeAudio();
     loadAlbum(album);
     setIsLoading(true);
     setSnapAnim(true);
@@ -234,7 +237,7 @@ export default function App() {
       play();
       if (withAudio) loadAndPlay(album);
     }, 1300);
-  }, [loadAlbum, play, loadAndPlay]);
+  }, [loadAlbum, play, loadAndPlay, primeAudio]);
 
   function handleDragEnd(event: DragEndEvent) {
     const droppedOnPlatter =
