@@ -69,11 +69,24 @@ export function useAudio() {
   const loadAndPlay = useCallback((album: Album) => {
     const audio = getAudio();
     const src = album.audioUrl || FALLBACK_TRACKS[album.id] || FALLBACK_TRACKS['1'];
-    if (audio.src !== src) {
-      audio.src = src;
-    }
+
+    // Always reassign + load: clears any error state and avoids the
+    // absolute-vs-relative URL mismatch that caused the old !== check to
+    // always reset without a proper load().
+    audio.src = src;
+    audio.load();
+
     connectAudioGraph(audio);
-    audio.play().catch(() => {});
+
+    // AudioContext.resume() is async — if the context is suspended we must
+    // await it before calling play(), otherwise play() silently fails.
+    const ctx = audioCtxRef.current;
+    const doPlay = () => audio.play().catch(() => {});
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(doPlay);
+    } else {
+      doPlay();
+    }
   }, [getAudio, connectAudioGraph]);
 
   const playAudio = useCallback(() => {

@@ -112,8 +112,8 @@
 }
 
 /* 2 bars, equal height */
-.vizBar1 { width: 9px;  height: 130px; }
-.vizBar2 { width: 9px;  height: 130px; }
+.vizBar1 { width: 6px;  height: 130px; }
+.vizBar2 { width: 6px;  height: 130px; }
 
 .vizFill {
   width: 100%;
