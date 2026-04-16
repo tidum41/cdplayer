@@ -111,11 +111,9 @@
   background-color: rgba(0,0,0,0.12);
 }
 
-/* Vary bar widths for a more organic, TP-7-inspired look */
-.vizBar1 { width: 7px;  height: 100px; }
+/* 2 bars, slightly different heights for organic feel */
+.vizBar1 { width: 9px;  height: 110px; }
 .vizBar2 { width: 9px;  height: 120px; }
-.vizBar3 { width: 9px;  height: 120px; }
-.vizBar4 { width: 7px;  height: 100px; }
 
 .vizFill {
   width: 100%;
@@ -128,8 +126,6 @@
 /* Idle animation when playing but no analyser */
 .vizFill1.vizActive { animation: bar1 1.3s ease-in-out infinite; }
 .vizFill2.vizActive { animation: bar2 0.9s ease-in-out infinite; }
-.vizFill3.vizActive { animation: bar3 1.1s ease-in-out infinite; }
-.vizFill4.vizActive { animation: bar4 1.5s ease-in-out infinite; }
 
 @keyframes bar1 {
   0%,100% { height: 12%; }
@@ -145,20 +141,4 @@
   38%     { height: 42%; }
   55%     { height: 75%; }
   75%     { height: 22%; }
-}
-
-@keyframes bar3 {
-  0%,100% { height: 16%; }
-  25%     { height: 55%; }
-  45%     { height: 95%; }
-  62%     { height: 28%; }
-  82%     { height: 70%; }
-}
-
-@keyframes bar4 {
-  0%,100% { height: 10%; }
-  18%     { height: 62%; }
-  42%     { height: 88%; }
-  60%     { height: 35%; }
-  78%     { height: 58%; }
 }

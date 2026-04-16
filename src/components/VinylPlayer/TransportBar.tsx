@@ -36,9 +36,9 @@ function EjectIcon() {
   );
 }
 
-// 4 bars covering bass → treble
-const NUM_BARS = 4;
-const FREQ_BINS = [2, 6, 14, 28];
+// 2 bars covering bass + treble
+const NUM_BARS = 2;
+const FREQ_BINS = [3, 14];
 
 export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, analyserRef }: TransportBarProps) {
   const barRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -87,6 +87,8 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         onPointerDown={() => setPressed('pause')}
         onPointerUp={() => setPressed(null)}
         onPointerLeave={() => setPressed(null)}
+        onTouchStart={(e) => { e.preventDefault(); setPressed('pause'); }}
+        onTouchEnd={() => { setPressed(null); onPause(); }}
         onClick={onPause}
       >
         <div className={styles.orangeDot} />
@@ -98,6 +100,8 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         onPointerDown={() => setPressed('play')}
         onPointerUp={() => setPressed(null)}
         onPointerLeave={() => setPressed(null)}
+        onTouchStart={(e) => { e.preventDefault(); setPressed('play'); }}
+        onTouchEnd={() => { setPressed(null); onPlay(); }}
         onClick={onPlay}
       >
         <PlayIcon />
@@ -108,6 +112,8 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         onPointerDown={() => !hasDisc ? null : setPressed('eject')}
         onPointerUp={() => setPressed(null)}
         onPointerLeave={() => setPressed(null)}
+        onTouchStart={(e) => { if (!hasDisc) return; e.preventDefault(); setPressed('eject'); }}
+        onTouchEnd={() => { setPressed(null); if (hasDisc) onEject(); }}
         onClick={onEject}
         disabled={!hasDisc}
       >

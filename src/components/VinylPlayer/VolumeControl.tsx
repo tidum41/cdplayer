@@ -48,21 +48,21 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
 
   const btnIdle: React.CSSProperties = {
     backgroundColor: '#C6C6C6',
-    border: '2px solid rgba(0,0,0,0.30)',
+    border: '2px solid rgba(0,0,0,0.22)',
     boxShadow: [
-      'rgba(255,255,255,0.40) 0px 3px 0px inset',   // top highlight
-      'rgba(0,0,0,0.28) 0px -5px 0px inset',          // bottom depth
-      'rgba(0,0,0,0.10) 0px 2px 4px',                 // outer drop shadow
+      'rgba(255,255,255,0.36) 0px 2px 0px inset',   // top highlight
+      'rgba(0,0,0,0.18) 0px -4px 0px inset',          // bottom depth
+      'rgba(0,0,0,0.08) 0px 2px 4px',                 // outer drop shadow
     ].join(', '),
   };
 
   const btnActive: React.CSSProperties = {
-    backgroundColor: '#ABABAB',
-    border: '2px solid rgba(0,0,0,0.38)',
-    transform: 'scale(0.93)',
+    backgroundColor: '#B8B8B8',
+    border: '2px solid rgba(0,0,0,0.30)',
+    transform: 'scale(0.94)',
     boxShadow: [
-      'rgba(0,0,0,0.36) 0px 5px 0px inset',           // pressed-down inset
-      'rgba(0,0,0,0.08) 0px 1px 2px',
+      'rgba(0,0,0,0.26) 0px 4px 0px inset',           // pressed-down inset
+      'rgba(0,0,0,0.06) 0px 1px 2px',
     ].join(', '),
   };
 
@@ -77,7 +77,7 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
       rotate: '-45deg',
       transformOrigin: '0% 0%',
       borderRadius: 'calc(infinity * 1px)',
-      outline: '3px solid rgba(0,0,0,0.72)',
+      outline: '2px solid rgba(0,0,0,0.55)',
       boxShadow: 'rgba(0,0,0,0.22) 0px 4px 8px',
     }}>
       {/* Pill fill */}
@@ -100,6 +100,8 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
         onPointerDown={() => setPressedDown(true)}
         onPointerUp={() => { setPressedDown(false); onVolumeDown(); }}
         onPointerLeave={() => setPressedDown(false)}
+        onTouchStart={(e) => { e.preventDefault(); setPressedDown(true); }}
+        onTouchEnd={() => { setPressedDown(false); onVolumeDown(); }}
       >
         <MinusIcon />
       </div>
@@ -110,6 +112,8 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
         onPointerDown={() => setPressedUp(true)}
         onPointerUp={() => { setPressedUp(false); onVolumeUp(); }}
         onPointerLeave={() => setPressedUp(false)}
+        onTouchStart={(e) => { e.preventDefault(); setPressedUp(true); }}
+        onTouchEnd={() => { setPressedUp(false); onVolumeUp(); }}
       >
         <PlusIcon />
       </div>

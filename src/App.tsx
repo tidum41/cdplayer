@@ -165,7 +165,7 @@ export default function App() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 12 } })
   );
 
   function handleDragStart(event: DragStartEvent) {
@@ -176,22 +176,31 @@ export default function App() {
     updatePlatterCenter();
   }
 
+  function getActivatorCoords(activatorEvent: Event): { x: number; y: number } {
+    if (typeof TouchEvent !== 'undefined' && activatorEvent instanceof TouchEvent) {
+      const t = activatorEvent.changedTouches[0] ?? activatorEvent.touches[0];
+      return { x: t?.clientX ?? 0, y: t?.clientY ?? 0 };
+    }
+    const pe = activatorEvent as PointerEvent;
+    return { x: pe.clientX, y: pe.clientY };
+  }
+
   function handleDragMove(event: DragMoveEvent) {
     const dx = event.delta?.x ?? 0;
     const dy = event.delta?.y ?? 0;
 
-    // Track actual cursor position for the fixed-position disc
+    // Track actual cursor/touch position for the fixed-position disc
     if (event.activatorEvent) {
-      const pe = event.activatorEvent as PointerEvent;
-      setDragCursorPos({ x: pe.clientX + dx, y: pe.clientY + dy });
+      const { x: startX, y: startY } = getActivatorCoords(event.activatorEvent);
+      setDragCursorPos({ x: startX + dx, y: startY + dy });
     }
 
     // Grow disc as cursor approaches platter. Use a fixed reference distance so
     // overshooting the platter center never makes the disc shrink back.
     if (platterCenterRef.current && event.activatorEvent) {
-      const pe = event.activatorEvent as PointerEvent;
-      const cursorX = pe.clientX + dx;
-      const cursorY = pe.clientY + dy;
+      const { x: startX, y: startY } = getActivatorCoords(event.activatorEvent);
+      const cursorX = startX + dx;
+      const cursorY = startY + dy;
       const pc = platterCenterRef.current;
       const dist = Math.sqrt((cursorX - pc.x) ** 2 + (cursorY - pc.y) ** 2);
       // Disc reaches full platter size when cursor is within 60px of platter center

@@ -46,6 +46,20 @@ export function VinylPlayer({
 }: VinylPlayerProps) {
   return (
     <div className={styles.playerCard}>
+      {/* MM-7 model label — top-left, TP-7 style */}
+      <div style={{
+        position: 'absolute',
+        top: 52,
+        left: 62,
+        fontFamily: '"IBM Plex Mono", "Courier New", monospace',
+        fontSize: 38,
+        fontWeight: 700,
+        letterSpacing: '-0.03em',
+        color: 'rgba(0,0,0,0.28)',
+        userSelect: 'none',
+        pointerEvents: 'none',
+        lineHeight: 1,
+      }}>MM-7</div>
       <Platter
         activeAlbum={activeAlbum}
         isPlaying={isPlaying}
