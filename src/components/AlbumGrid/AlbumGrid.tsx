@@ -13,14 +13,12 @@ interface AlbumGridProps {
   isCarousel?: boolean;
   onAlbumTap?: (album: Album) => void;
   dragDirection?: DragDir;
-  dragDelta?: { x: number; y: number };
-  dragDiscSize?: number;
   showHint?: boolean;
 }
 
 const GRID_GAP = 14;
 
-export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap, dragDirection, dragDelta, dragDiscSize, showHint }: AlbumGridProps) {
+export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarousel, onAlbumTap, dragDirection, showHint }: AlbumGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -71,8 +69,6 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
                   resolvedColor={colorMap?.[album.id]}
                   onTap={onAlbumTap}
                   dragDirection={dragDirection}
-                  dragDelta={dragDelta}
-                  dragDiscSize={dragDiscSize}
                 />
               </div>
             ))}
@@ -105,8 +101,6 @@ export function AlbumGrid({ activeAlbumId, gridWidth, artSize, colorMap, isCarou
           resolvedColor={colorMap?.[album.id]}
           onTap={onAlbumTap}
           dragDirection={dragDirection}
-          dragDelta={dragDelta}
-          dragDiscSize={dragDiscSize}
         />
       ))}
     </div>

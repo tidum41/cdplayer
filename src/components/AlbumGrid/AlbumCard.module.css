@@ -13,26 +13,8 @@
 
 .artWrap {
   position: relative;
-  overflow: visible; /* allow disc to peek out from behind cover */
   flex: 0 0 auto;
-}
-
-/* Disc peek — absolutely positioned, tracks cursor via left/top from App state.
-   z-index: 0 keeps it behind the cover (.art at z-index: 1) at all times.
-   Only the portion outside the cover bounds is ever visible. */
-.discPeek {
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  /* Snap back smoothly when drag ends */
-  transition: left 0.28s ease-out, top 0.28s ease-out,
-              width 0.28s ease-out, height 0.28s ease-out,
-              opacity 0.18s ease-out;
-}
-
-/* During drag: no position/size transition — disc tracks cursor instantly */
-.card.dragging .discPeek {
-  transition: opacity 0.06s linear;
+  /* No overflow:visible needed — disc peek is now fixed-position in App.tsx */
 }
 
 .art {

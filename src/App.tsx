@@ -33,14 +33,14 @@ export default function App() {
   const { loadAndPlay, playAudio, pauseAudio, stopAudio, volumeUp, volumeDown, volume, analyserRef, scratchAudio } = useAudio();
   const colorMap = useAlbumColors(albums);
   const [scratchRate, setScratchRate] = useState(1);
-  const [, setDragAlbum] = useState<Album | null>(null);
+  const [dragAlbum, setDragAlbum] = useState<Album | null>(null);
   const [dragDirection, setDragDirection] = useState<'left' | 'right' | 'up' | 'down' | null>(null);
   const [snapAnim, setSnapAnim] = useState(false);
   const [ejectAnim, setEjectAnim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
   const [dragDiscSize, setDragDiscSize] = useState(120);
-  const [dragDelta, setDragDelta] = useState<{x: number; y: number}>({x: 0, y: 0});
+  const [dragCursorPos, setDragCursorPos] = useState<{x: number; y: number} | null>(null);
   const [isVertical, setIsVertical] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState<boolean | null>(null);
   const [showConsent, setShowConsent] = useState(false);
@@ -171,7 +171,7 @@ export default function App() {
   function handleDragStart(event: DragStartEvent) {
     setDragAlbum(event.active.data.current?.album ?? null);
     setDragDiscSize(artSizeRef.current);
-    setDragDelta({x: 0, y: 0});
+    setDragCursorPos(null);
     setDragDirection(null);
     updatePlatterCenter();
   }
@@ -179,7 +179,12 @@ export default function App() {
   function handleDragMove(event: DragMoveEvent) {
     const dx = event.delta?.x ?? 0;
     const dy = event.delta?.y ?? 0;
-    setDragDelta({x: dx, y: dy});
+
+    // Track actual cursor position for the fixed-position disc
+    if (event.activatorEvent) {
+      const pe = event.activatorEvent as PointerEvent;
+      setDragCursorPos({ x: pe.clientX + dx, y: pe.clientY + dy });
+    }
 
     // Grow disc as cursor approaches platter. Use a fixed reference distance so
     // overshooting the platter center never makes the disc shrink back.
@@ -238,7 +243,7 @@ export default function App() {
 
     setDragAlbum(null);
     setDragDiscSize(artSizeRef.current);
-    setDragDelta({x: 0, y: 0});
+    setDragCursorPos(null);
     setDragDirection(null);
   }
 
@@ -433,8 +438,6 @@ export default function App() {
                   isCarousel={isVertical}
                   onAlbumTap={handleAlbumTap}
                   dragDirection={dragDirection}
-                  dragDelta={dragDelta}
-                  dragDiscSize={dragDiscSize}
                   showHint={!activeAlbum}
                 />
               </div>
@@ -444,6 +447,24 @@ export default function App() {
         </div>
 
       </DndContext>
+
+      {/* Disc peek/drag ghost — fixed-position, escapes all overflow clipping.
+          z-index 1000 puts it above the grid but the dragging card's art is z-index 1001
+          so the disc appears to emerge from behind the album cover. */}
+      {dragAlbum && dragDirection !== null && dragCursorPos && (
+        <div style={{
+          position: 'fixed',
+          left: dragCursorPos.x - dragDiscSize / 2,
+          top: dragCursorPos.y - dragDiscSize / 2,
+          width: dragDiscSize,
+          height: dragDiscSize,
+          pointerEvents: 'none',
+          zIndex: 1000,
+          transition: 'width 0.08s linear, height 0.08s linear',
+        }}>
+          <DragDisc size={dragDiscSize} color={colorMap[dragAlbum.id] ?? dragAlbum.color} />
+        </div>
+      )}
 
       {/* Eject drag ghost — fixed-position disc that appears when dragging disc off platter */}
       {ejectDragPos && activeAlbum && ejectDiscSize > 0 && (
