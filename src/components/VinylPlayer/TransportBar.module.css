@@ -111,9 +111,9 @@
   background-color: rgba(0,0,0,0.12);
 }
 
-/* 2 bars, slightly different heights for organic feel */
-.vizBar1 { width: 9px;  height: 110px; }
-.vizBar2 { width: 9px;  height: 120px; }
+/* 2 bars, equal height */
+.vizBar1 { width: 9px;  height: 130px; }
+.vizBar2 { width: 9px;  height: 130px; }
 
 .vizFill {
   width: 100%;
