@@ -8,13 +8,14 @@ interface PlatterProps {
   isPlaying: boolean;
   snapAnim: boolean;
   ejectAnim: boolean;
+  speedMultiplier?: number;
   onEject?: () => void;
   onScratch?: (degPerMs: number) => void;
   onEjectDragMove?: (clientX: number, clientY: number) => void;
   onEjectDragCancel?: () => void;
 }
 
-export function Platter({ activeAlbum, isPlaying, snapAnim, ejectAnim, onEject, onScratch, onEjectDragMove, onEjectDragCancel }: PlatterProps) {
+export function Platter({ activeAlbum, isPlaying, snapAnim, ejectAnim, speedMultiplier = 1, onEject, onScratch, onEjectDragMove, onEjectDragCancel }: PlatterProps) {
   const { setNodeRef, isOver } = useDroppable({ id: 'platter' });
 
   return (
@@ -27,6 +28,7 @@ export function Platter({ activeAlbum, isPlaying, snapAnim, ejectAnim, onEject, 
           size={835}
           isSpinning={isPlaying && !!activeAlbum}
           showArcs={!!activeAlbum}
+          speedMultiplier={speedMultiplier}
           onEject={onEject}
           onScratch={onScratch}
           onEjectDragMove={onEjectDragMove}

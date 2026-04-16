@@ -5,6 +5,7 @@ interface DiscProps {
   size?: number;
   isSpinning?: boolean;
   showArcs?: boolean;
+  speedMultiplier?: number;
   onEject?: () => void;
   onScratch?: (degPerMs: number) => void;
   onEjectDragMove?: (clientX: number, clientY: number) => void;
@@ -20,6 +21,7 @@ export function Disc({
   size = 835,
   isSpinning = false,
   showArcs = false,
+  speedMultiplier = 1,
   onEject,
   onScratch,
   onEjectDragMove,
@@ -35,6 +37,7 @@ export function Disc({
   const angleRef = useRef(0);
   const speedRef = useRef(0);
   const isSpinningRef = useRef(isSpinning);
+  const speedMultiplierRef = useRef(speedMultiplier);
 
   // Scratch refs
   const isScratchingRef = useRef(false);
@@ -44,6 +47,7 @@ export function Disc({
   const scratchVelRef = useRef(0); // deg/ms during scratch
 
   useEffect(() => { isSpinningRef.current = isSpinning; }, [isSpinning]);
+  useEffect(() => { speedMultiplierRef.current = speedMultiplier; }, [speedMultiplier]);
 
   // ── Persistent RAF physics loop ──────────────────────────────────────────
   useEffect(() => {
@@ -51,8 +55,9 @@ export function Disc({
 
     const animate = () => {
       if (!isScratchingRef.current) {
-        // Normal physics: lerp toward target speed
-        const target = isSpinningRef.current ? TARGET_DEG_PER_FRAME : 0;
+        // Normal physics: lerp toward target speed (scaled by speedMultiplier so
+        // smaller rendered sizes spin at the same perceived angular velocity)
+        const target = isSpinningRef.current ? TARGET_DEG_PER_FRAME * speedMultiplierRef.current : 0;
         const lerp = speedRef.current < target ? ACCEL : DECEL;
         speedRef.current += (target - speedRef.current) * lerp;
         if (speedRef.current > 0.002) {

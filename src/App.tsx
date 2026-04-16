@@ -315,6 +315,12 @@ export default function App() {
     setEjectDragPos(null);
   }, []);
 
+  // ── Disc speed normalization ───────────────────────────────────────────────
+  // Desktop reference scale ≈ TARGET_PLAYER_W_PX / PLAYER_W. On mobile the player
+  // is rendered much smaller, so the disc appears to spin slower at the same deg/frame.
+  // Multiply by the inverse ratio so perceived angular velocity stays consistent.
+  const discSpeedMultiplier = Math.min(2.5, Math.max(1, (TARGET_PLAYER_W_PX / PLAYER_W) / scale));
+
   // ── Layout math ────────────────────────────────────────────────────────────
   const playerWidth  = PLAYER_W * scale;
   const playerHeight = PLAYER_H * scale;
@@ -396,6 +402,7 @@ export default function App() {
                     onVolumeDown={volumeDown}
                     snapAnim={snapAnim}
                     ejectAnim={ejectAnim}
+                    discSpeedMultiplier={discSpeedMultiplier}
                     volume={volume}
                     analyserRef={analyserRef}
                     onScratch={handleScratch}

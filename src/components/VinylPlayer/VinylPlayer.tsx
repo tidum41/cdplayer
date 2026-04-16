@@ -16,6 +16,7 @@ interface VinylPlayerProps {
   onVolumeDown: () => void;
   snapAnim: boolean;
   ejectAnim: boolean;
+  discSpeedMultiplier?: number;
   volume?: number;
   analyserRef?: React.RefObject<AnalyserNode | null>;
   onScratch?: (degPerMs: number) => void;
@@ -35,6 +36,7 @@ export function VinylPlayer({
   onVolumeDown,
   snapAnim,
   ejectAnim,
+  discSpeedMultiplier = 1,
   volume = 0.7,
   analyserRef,
   onScratch,
@@ -49,6 +51,7 @@ export function VinylPlayer({
         isPlaying={isPlaying}
         snapAnim={snapAnim}
         ejectAnim={ejectAnim}
+        speedMultiplier={discSpeedMultiplier}
         onEject={onEject}
         onScratch={onScratch}
         onEjectDragMove={onEjectDragMove}

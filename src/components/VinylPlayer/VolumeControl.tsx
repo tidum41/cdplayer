@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface VolumeControlProps {
   onVolumeUp: () => void;
@@ -7,41 +7,63 @@ interface VolumeControlProps {
 
 function MinusIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
-      <rect x="5" y="12.5" width="18" height="3.5" rx="1.75" fill="rgba(0,0,0,0.52)" />
+    <svg width="30" height="30" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
+      <rect x="4" y="12" width="20" height="4" rx="2" fill="rgba(0,0,0,0.58)" />
     </svg>
   );
 }
 
 function PlusIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
-      <rect x="5" y="12.5" width="18" height="3.5" rx="1.75" fill="rgba(0,0,0,0.52)" />
-      <rect x="12.5" y="5" width="3.5" height="18" rx="1.75" fill="rgba(0,0,0,0.52)" />
+    <svg width="30" height="30" viewBox="0 0 28 28" fill="none" style={{ transform: 'rotate(45deg)', display: 'block' }}>
+      <rect x="4" y="12" width="20" height="4" rx="2" fill="rgba(0,0,0,0.58)" />
+      <rect x="12" y="4" width="4" height="20" rx="2" fill="rgba(0,0,0,0.58)" />
     </svg>
   );
 }
 
 export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) {
+  const [pressedUp, setPressedUp] = useState(false);
+  const [pressedDown, setPressedDown] = useState(false);
+
   const pillW = 210;
   const pillH = 96;
   const btnSize = 78;
   const btnOffset = 9;
 
-  const btnStyle: React.CSSProperties = {
+  const btnBase: React.CSSProperties = {
     position: 'absolute',
     top: btnOffset,
     width: btnSize,
     height: btnSize,
-    backgroundColor: '#C8C8C8',
     borderRadius: 'calc(infinity * 1px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: '1.5px solid rgba(0,0,0,0.22)',
-    boxShadow: 'rgba(255,255,255,0.20) 0px 2px 0px inset, rgba(0,0,0,0.12) 0px -2px 0px inset',
     cursor: 'pointer',
     zIndex: 2,
+    transition: 'transform 0.05s ease, background-color 0.05s ease, box-shadow 0.05s ease',
+    WebkitTapHighlightColor: 'transparent',
+  };
+
+  const btnIdle: React.CSSProperties = {
+    backgroundColor: '#C6C6C6',
+    border: '2px solid rgba(0,0,0,0.30)',
+    boxShadow: [
+      'rgba(255,255,255,0.40) 0px 3px 0px inset',   // top highlight
+      'rgba(0,0,0,0.28) 0px -5px 0px inset',          // bottom depth
+      'rgba(0,0,0,0.10) 0px 2px 4px',                 // outer drop shadow
+    ].join(', '),
+  };
+
+  const btnActive: React.CSSProperties = {
+    backgroundColor: '#ABABAB',
+    border: '2px solid rgba(0,0,0,0.38)',
+    transform: 'scale(0.93)',
+    boxShadow: [
+      'rgba(0,0,0,0.36) 0px 5px 0px inset',           // pressed-down inset
+      'rgba(0,0,0,0.08) 0px 1px 2px',
+    ].join(', '),
   };
 
   return (
@@ -55,31 +77,39 @@ export function VolumeControl({ onVolumeUp, onVolumeDown }: VolumeControlProps) 
       rotate: '-45deg',
       transformOrigin: '0% 0%',
       borderRadius: 'calc(infinity * 1px)',
-      outline: '2px solid #000000',
+      outline: '3px solid rgba(0,0,0,0.72)',
+      boxShadow: 'rgba(0,0,0,0.22) 0px 4px 8px',
     }}>
-      {/* Pill fill — no pointer events so clicks pass through to buttons */}
+      {/* Pill fill */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        backgroundColor: '#B2B2B2',
+        backgroundColor: '#ABABAB',
         borderRadius: 'calc(infinity * 1px)',
-        boxShadow: 'rgba(255,255,255,0.18) 0px 2px 0px inset, rgba(0,0,0,0.15) 0px -2px 0px inset',
+        boxShadow: [
+          'rgba(255,255,255,0.22) 0px 3px 0px inset',
+          'rgba(0,0,0,0.22) 0px -5px 0px inset',
+        ].join(', '),
         pointerEvents: 'none',
         zIndex: 0,
       }} />
 
       {/* Minus button */}
       <div
-        style={{ ...btnStyle, left: btnOffset }}
-        onClick={(e) => { e.stopPropagation(); onVolumeDown(); }}
+        style={{ ...btnBase, ...(pressedDown ? btnActive : btnIdle), left: btnOffset }}
+        onPointerDown={() => setPressedDown(true)}
+        onPointerUp={() => { setPressedDown(false); onVolumeDown(); }}
+        onPointerLeave={() => setPressedDown(false)}
       >
         <MinusIcon />
       </div>
 
       {/* Plus button */}
       <div
-        style={{ ...btnStyle, left: pillW - btnOffset - btnSize }}
-        onClick={(e) => { e.stopPropagation(); onVolumeUp(); }}
+        style={{ ...btnBase, ...(pressedUp ? btnActive : btnIdle), left: pillW - btnOffset - btnSize }}
+        onPointerDown={() => setPressedUp(true)}
+        onPointerUp={() => { setPressedUp(false); onVolumeUp(); }}
+        onPointerLeave={() => setPressedUp(false)}
       >
         <PlusIcon />
       </div>

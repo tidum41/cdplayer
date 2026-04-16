@@ -13,8 +13,8 @@ interface TransportBarProps {
 function PauseIcon() {
   return (
     <svg width="52" height="52" viewBox="0 0 44 44" fill="none">
-      <rect x="12" y="10" width="7.5" height="24" rx="2" fill="rgba(0,0,0,0.55)" />
-      <rect x="24.5" y="10" width="7.5" height="24" rx="2" fill="rgba(0,0,0,0.55)" />
+      <rect x="11" y="10" width="8" height="24" rx="2.5" fill="rgba(0,0,0,0.62)" />
+      <rect x="25" y="10" width="8" height="24" rx="2.5" fill="rgba(0,0,0,0.62)" />
     </svg>
   );
 }
@@ -22,7 +22,7 @@ function PauseIcon() {
 function PlayIcon() {
   return (
     <svg width="52" height="52" viewBox="0 0 44 44" fill="none">
-      <path d="M14 9L35 22L14 35V9Z" fill="rgba(0,0,0,0.55)" />
+      <path d="M13 8L36 22L13 36V8Z" fill="rgba(0,0,0,0.62)" />
     </svg>
   );
 }
@@ -30,23 +30,20 @@ function PlayIcon() {
 function EjectIcon() {
   return (
     <svg width="52" height="52" viewBox="0 0 44 44" fill="none">
-      <path d="M22 10L33 24H11L22 10Z" fill="rgba(0,0,0,0.55)" />
-      <rect x="11" y="28" width="22" height="5" rx="1.5" fill="rgba(0,0,0,0.55)" />
+      <path d="M22 9L34 25H10L22 9Z" fill="rgba(0,0,0,0.62)" />
+      <rect x="10" y="29" width="24" height="6" rx="2" fill="rgba(0,0,0,0.62)" />
     </svg>
   );
 }
 
-// Number of visualizer bars
-const NUM_BARS = 2;
-// Which FFT bins to sample for each bar (low and high freq)
-const FREQ_BINS = [3, 12];
+// 4 bars covering bass → treble
+const NUM_BARS = 4;
+const FREQ_BINS = [2, 6, 14, 28];
 
 export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, analyserRef }: TransportBarProps) {
   const barRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rafRef = useRef<number>(0);
   const dataRef = useRef<Uint8Array | null>(null);
-  // Track which button is pressed — CSS :active is skipped for synthetic events
-  // (dispatchEvent), so we drive the pressed style via React state instead.
   const [pressed, setPressed] = useState<'pause' | 'play' | 'eject' | null>(null);
 
   useEffect(() => {
@@ -54,9 +51,8 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
 
     if (!isPlaying || !hasDisc || !analyser) {
       cancelAnimationFrame(rafRef.current);
-      // Reset bars to idle heights
       barRefs.current.forEach((bar) => {
-        if (bar) bar.style.height = `10%`;
+        if (bar) bar.style.height = `8%`;
       });
       return;
     }
@@ -72,8 +68,9 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
         const bin = FREQ_BINS[i] ?? 4;
         const raw = dataRef.current![bin] ?? 0;
         const normalized = raw / 255;
-        const amplified = Math.pow(normalized, 0.55) * 1.15;
-        const pct = 6 + Math.min(amplified, 1) * 90;
+        // More reactive: lower power curve so quiet signals still show movement
+        const amplified = Math.pow(normalized, 0.42) * 1.3;
+        const pct = 8 + Math.min(amplified, 1) * 88;
         bar.style.height = `${pct}%`;
       });
       rafRef.current = requestAnimationFrame(animate);
@@ -119,15 +116,17 @@ export function TransportBar({ isPlaying, onPlay, onPause, onEject, hasDisc, ana
 
       {/* Audio visualizer section */}
       <div className={styles.vizSection}>
-        {Array.from({ length: NUM_BARS }).map((_, i) => (
-          <div key={i} className={styles.vizBar}>
-            <div
-              ref={el => { barRefs.current[i] = el; }}
-              className={`${styles.vizFill} ${isPlaying && !analyserRef?.current ? styles.vizActive : ''} ${i === 0 ? styles.vizFill1 : i === 1 ? styles.vizFill2 : ''}`}
-              style={{ height: `10%` }}
-            />
-          </div>
-        ))}
+        <div className={styles.vizBars}>
+          {Array.from({ length: NUM_BARS }).map((_, i) => (
+            <div key={i} className={`${styles.vizBar} ${styles[`vizBar${i + 1}` as keyof typeof styles]}`}>
+              <div
+                ref={el => { barRefs.current[i] = el; }}
+                className={`${styles.vizFill} ${isPlaying && !analyserRef?.current ? styles.vizActive : ''} ${styles[`vizFill${i + 1}` as keyof typeof styles]}`}
+                style={{ height: `8%` }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
