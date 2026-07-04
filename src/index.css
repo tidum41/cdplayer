@@ -9,10 +9,20 @@ html, body, #root {
   width: 100%;
 }
 
+:root {
+  --app-bg: #E8E8E8;
+  --app-text: rgba(0, 0, 0, 0.6);
+}
+[data-theme="dark"] {
+  --app-bg: #101214;
+  --app-text: rgba(255, 255, 255, 0.5);
+}
+
 body {
-  background-color: #E8E8E8;
+  background-color: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease;
 }
 
 button {

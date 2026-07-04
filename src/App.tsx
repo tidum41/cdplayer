@@ -100,6 +100,10 @@ export default function App() {
     let capturedTarget: Element | null = null;
 
     function handleMessage(e: MessageEvent) {
+      if (e.data?.type === 'theme') {
+        document.documentElement.setAttribute('data-theme', e.data.value === 'dark' ? 'dark' : 'light');
+        return;
+      }
       const { type, x, y } = (e.data ?? {}) as { type?: string; x?: number; y?: number };
       if (typeof type !== 'string' || !type.startsWith('framer-') || x == null || y == null) return;
       const target = document.elementFromPoint(x, y);
