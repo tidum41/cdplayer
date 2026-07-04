@@ -12,10 +12,14 @@ html, body, #root {
 :root {
   --app-bg: #E8E8E8;
   --app-text: rgba(0, 0, 0, 0.6);
+  --app-text-strong: rgba(0, 0, 0, 0.82);
+  --app-text-muted: rgba(0, 0, 0, 0.38);
 }
 [data-theme="dark"] {
-  --app-bg: #101214;
+  --app-bg: #181b1e;
   --app-text: rgba(255, 255, 255, 0.5);
+  --app-text-strong: rgba(255, 255, 255, 0.82);
+  --app-text-muted: rgba(255, 255, 255, 0.3);
 }
 
 body {

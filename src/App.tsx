@@ -26,7 +26,7 @@ const PLATTER_SIZE = 835;
 const MOBILE_BREAKPOINT = 850; // Switches to vertical layout sooner (like iPad portrait)
 
 // Target rendered player width — player stays this size unless viewport is too small
-const TARGET_PLAYER_W_PX = 370;
+const TARGET_PLAYER_W_PX = 460;
 
 export default function App() {
   const { activeAlbum, isPlaying, loadAlbum, play, pause, eject } = usePlayerState();
@@ -71,7 +71,7 @@ export default function App() {
     } else {
       // Horizontal: prefer a fixed ~370px player width; only shrink for tight viewports
       const targetScale = TARGET_PLAYER_W_PX / PLAYER_W;
-      const maxFromW = (W * 0.50) / PLAYER_W; // never exceed 50% of viewport width
+      const maxFromW = (W * 0.60) / PLAYER_W; // never exceed 60% of viewport width
       const maxFromH = Math.max(0.12, (H - 32) / PLAYER_H); // Player strictly restrained by parent height minus padding
       const s = Math.min(targetScale, maxFromW, maxFromH);
       setScale(Math.max(0.14, s));
